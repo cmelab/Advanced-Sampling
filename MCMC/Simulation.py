@@ -51,6 +51,11 @@ class Simulation:
                 generate a random number p'
                 if p' < p : Accept else reject
         """
+        _system = np.copy(self.system)
+        non_zero_indices = list(np.nonzero(self.system))
+        all_indices = 
+        
+
         return NotImplementedError
 
     def run(self, n_steps=100):
