@@ -59,15 +59,17 @@ class Simulation:
                 if p' < p : Accept else reject
         """
         _system = np.copy(self.system)
+        # Select random occupied site
         non_zero_indices = list(np.nonzero(self.system))
         random.shuffle(non_zero_indices)
         site1 = non_zero_indices[0]
         site1_val = _system[site1]
+        # Select random site from all possible sites
         all_indices = list(self.grid_indices) 
         random.shuffle(all_indices)
         site2 = all_indices[0]
         site2_val = _system[site2]
-
+        # Swap the values of each site and find change in energy
         _system[site1] = site2_val
         _system[site2] = site1_val
         delta_U = self.calculate_energy(_system) - self.energy
