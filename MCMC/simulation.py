@@ -6,13 +6,14 @@ class Simulation:
         self.n_density = n_density
         self.N = N
         self.kT = kT
-        self.n_particles = (N*N) * n_density
+        self.n_particles = int((N*N) * n_density)
         self.grid_indices = list(itertools.product(np.arange(self.N), np.arange(self.N)))
         self.system = self._init_system()
-        self.energy = self.calculate_energy(self.system)
         self.timestep = 0
         self.system_history = []
+        self.energies = []
         self.write_freq = write_freq
+        self.accepted_moves = 0
 
     def _init_system(self):
         """
@@ -21,6 +22,10 @@ class Simulation:
         :return: A 2D numpy array of shape (N, N).
         """
         return NotImplementedError
+    
+    @property
+    def energy(self):
+        return self.calculate_energy(self.system)
 
     def find_neighbors(self, coordinate):
         """
@@ -55,21 +60,43 @@ class Simulation:
         """
         _system = np.copy(self.system)
         non_zero_indices = list(np.nonzero(self.system))
-        all_indices = 
-        
+        random.shuffle(non_zero_indices)
+        site1 = non_zero_indices[0]
+        site1_val = _system[site1]
+        all_indices = list(self.grid_indices) 
+        random.shuffle(all_indices)
+        site2 = all_indices[0]
+        site2_val = _system[site2]
 
-        return NotImplementedError
+        _system[site1] = site2_val
+        _system[site2] = site1_val
+        delta_U = self.calculate_energy(_system) - self.energy
+
+        if delta_U <= 0:
+            self.system = _system
+            self.accepted_moves += 1
+        else:
+            rand_num = random.uniform(0, 1)
+            if np.exp(-delta_U/self.kT) <= rand_num:
+                self.system = _system
+                self.accepted_moves += 1
+            else:
+                pass
 
     def run(self, n_steps=100):
         """Run MCMC for n number of steps."""
+        start = time.time()
         for i in range(n_steps):
-            # step 1: Do trial move
+            self.trial_move()
 
             if i % self.write_freq == 0:
-                # step 2: append to system history
-                continue
+                self.system_history.append(self.system)
+                self.energies.append(self.energy)
 
             self.timestep += 1
+        end = time.time()
+        self.total_time_sec = end - start
+        self.tps = n_steps / self.total_time_sec
 
     def visualize(self, save_path=""):
         """
