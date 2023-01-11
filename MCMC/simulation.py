@@ -14,6 +14,7 @@ class Simulation:
         self.energies = []
         self.write_freq = write_freq
         self.accepted_moves = 0
+        self.tps = None
 
     def _init_system(self):
         """
@@ -97,8 +98,7 @@ class Simulation:
 
             self.timestep += 1
         end = time.time()
-        self.total_time_sec = end - start
-        self.tps = n_steps / self.total_time_sec
+        self.tps = n_steps / (end - start) 
 
     def visualize(self, save_path=""):
         """
@@ -114,4 +114,3 @@ class Simulation:
         :param save_path: Path to save the trajectory.
         """
         return NotImplementedError
-
