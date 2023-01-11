@@ -6,7 +6,7 @@ class Simulation:
         self.n_density = n_density
         self.N = N
         self.kT = kT
-        self.n_particles = (N*N) * n_density
+        self.n_particles = (L*L) * n_density
         self.grid_indices = list(itertools.product(np.arange(self.N), np.arange(self.N)))
         self.system = self._init_system()
         self.energy = self.calculate_energy(self.system)
