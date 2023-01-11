@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 class Simulation:
     def __init__(self, n_density=0.5, N=10, kT=1.0, write_freq=5):
@@ -6,6 +7,7 @@ class Simulation:
         self.N = N
         self.kT = kT
         self.n_particles = (N*N) * n_density
+        self.grid_indices = list(itertools.product(np.arange(self.N), np.arange(self.N)))
         self.system = self._init_system()
         self.energy = self.calculate_energy(self.system)
         self.timestep = 0
@@ -63,8 +65,8 @@ class Simulation:
         for i in range(n_steps):
             # step 1: Do trial move
 
-            if i % self.write_freq  == 0:
-                # step 2: append to system hisoty
+            if i % self.write_freq == 0:
+                # step 2: append to system history
                 continue
 
             self.timestep += 1
@@ -83,5 +85,4 @@ class Simulation:
         :param save_path: Path to save the trajectory.
         """
         return NotImplementedError
-
 
