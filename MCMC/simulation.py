@@ -54,6 +54,9 @@ class Simulation:
             if i == index:
                 continue
             d = math.sqrt(math.pow((coord1[0] - coord2[0]), 2) + math.pow((coord1[1] - coord2[1]), 2))
+            # periodic boundary check
+            if d >= (self.L/2):
+                d -= self.L
             if d < (2 * self.r):
                 return True
         return False
