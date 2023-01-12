@@ -1,6 +1,9 @@
-import numpy as np
 import itertools
 import math
+import random
+
+import numpy as np
+
 
 class Simulation:
     def __init__(self, n_density=0.5, r=0.1, L=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5):
@@ -12,6 +15,7 @@ class Simulation:
         self.max_trans = max_trans
         self.system = self._init_system()
         self.timestep = 0
+        self.tps = None
         self.system_history = []
         self.energies = []
         self.accepted_moves = 0
@@ -77,18 +81,48 @@ class Simulation:
                 generate a random number p'
                 if p' < p : Accept else reject
         """
-        return NotImplementedError
+        # Random choose a particle:
+        particle_idx = random.randint(0, self.system.shape[0])
+        # Uniformly sample a direction and move distance
+        direction = random.uniform(0, math.pi)
+        distance = random.uniform(0, self.max_distance) 
+        # Update the coordinates of the particle
+        _system = np.copy(self.system)
+        _system[particle_idx][0] += distance * np.cos(direction) 
+        _system[particle_idx][1] += distance * np.sin(direction)
+        return _system, particle_idx
 
     def run(self, n_steps=100):
         """Run MCMC for n number of steps."""
+        start = time.time()
         for i in range(n_steps):
-            # step 1: Do trial move
+            trial_system, moved_idx = trial_move()
+            # Check for overlapping particles
+            if self.check_overlap(trial_system, moved_idx):
+                # Moved resulted in spheres overlapping
+                pass
+            else: # Move doesn't result in overlapping particles
+                trial_energy = self.calculate_energy(trial_system)
+                delta_U = trial_energy - self.energy
+                if delta_U <= 0:
+                    # update self.system
+                    self.accepted_moves += 1
+                else:
+                    rand_num = random.uniform(0, 1)
+                    if np.exp(-delta_U/self.kT) <= rand_num:
+                        # update system
+                        self.accepted_moves += 1
+                    else:
+                        pass
 
             if i % self.write_freq == 0:
-                # step 2: append to system history
-                continue
+                self.energies.append(self.energy)
+                self.system_history.append(self.system)
 
             self.timestep += 1
+
+        end = time.time()
+        self.tps = np.round(n_steps / (end-start), 3)
 
     def visualize(self, save_path=""):
         """
