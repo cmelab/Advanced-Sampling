@@ -42,19 +42,22 @@ class Simulation:
         """
         return NotImplementedError
 
-
-    def check_overlap(self, coord1, coord2):
+    def check_overlap(self, system, index):
         """
-        Check if two disks of radius r overlap.
-        :param coord1: (x, y) coordinate of disk 1 center.
-        :param coord2: (x, y) coordinate of disk 2 center.
-        :return: True if they overlap, else False.
+        Check if particle with specified index overlpas with the other particles in the system.
+        :param system: 2D array of particle positions.
+        :param index: index of the particle.
+        :return: True if ther is any overlap, else False.
         """
-        d = math.sqrt(math.pow((coord1[0] - coord2[0]), 2) + math.pow((coord1[1] - coord2[1]), 2))
-        if d < (2 * self.r):
-            return True
-        else:
-            return False
+        coord1 = system[index]
+        for i, coord2 in enumerate(system):
+            if i == index:
+                continue
+            d = math.sqrt(math.pow((coord1[0] - coord2[0]), 2) + math.pow((coord1[1] - coord2[1]), 2))
+            if d < (2 * self.r):
+                return True
+            else:
+                return False
 
     def calculate_energy(self, system):
         """
