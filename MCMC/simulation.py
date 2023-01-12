@@ -3,17 +3,14 @@ import itertools
 import math
 
 class Simulation:
-    def __init__(self, n_density=0.5, r=0.1, L=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5):
+    def __init__(self, n_density=0.5, r=0.1, n_particles=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5):
         self.n_density = n_density
         self.r = r
-        self.L = L
+	self.n_particles = n_particles
         self.kT = kT
         self.r_cut = r_cut
         self.max_trans = max_trans
-        self.n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
-        if self.n_particles == 0:
-            raise ValueError("cannot fit any disk with this density! "
-                             "Either decrease density/disk radius or increase box size.")
+	self.L = (math.pow(self.n_particles,0.5))/(math.pow(self.n_density,0.5))
         self.system = self._init_system()
         self.timestep = 0
         self.system_history = []
