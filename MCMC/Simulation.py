@@ -18,6 +18,8 @@ class Simulation:
         occupied sites are 1 and empty sites are 0.
         :return: A 2D numpy array of shape (N, N).
         """
+        array = np.zeros((self.N, self.N),dtype = int)
+        np.random.randint(array, high=1, size=self.N)
         return NotImplementedError
 
     def find_neighbors(self, coordinate):
