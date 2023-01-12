@@ -10,6 +10,10 @@ class Simulation:
         self.kT = kT
         self.r_cut = r_cut
         self.max_trans = max_trans
+        self.n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
+        if self.n_particles == 0:
+            raise ValueError("cannot fit any disk with this density! "
+                             "Either decrease density/disk radius or increase box size.")
         self.system = self._init_system()
         self.timestep = 0
         self.system_history = []
@@ -17,18 +21,6 @@ class Simulation:
         self.accepted_moves = 0
         self.tps = None
         self.write_freq = write_freq
-
-
-    @property
-    def n_particles(self):
-        """
-        Calculate number of disks from the number density, disk radius and box size.
-        :return: number of particles.
-        """
-        n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
-        if n_particles == 0:
-            raise ValueError("cannot fit any disk with this density! "
-                             "Either decrease density/disk radius or increase box size.")
 
     @property
     def energy(self):
@@ -53,7 +45,7 @@ class Simulation:
         for i, coord2 in enumerate(system):
             if i == index:
                 continue
-            d = math.sqrt(math.pow((coord1[0] - coord2[0]), 2) + math.pow((coord1[1] - coord2[1]), 2))
+            d = np.linalg.norm(coord1 - coord2)
             # periodic boundary check
             if d >= (self.L/2):
                 d -= self.L
