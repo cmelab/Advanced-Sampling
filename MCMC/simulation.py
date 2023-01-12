@@ -23,8 +23,13 @@ class Simulation:
         self.system_history = []
         self.energies = []
         self.accepted_moves = 0
+        self.rejected_moves = 0
         self.tps = None
         self.write_freq = write_freq
+    
+    @property
+    def acceptance_ratio(self):
+        return self.accepted_moves / self.rejected_moves
 
     @property
     def n_particles(self):
@@ -82,11 +87,21 @@ class Simulation:
         move_idx = random.randint(0, self.system.shape[0])
         # Uniformly sample a direction and move distance
         direction = random.uniform(0, math.pi)
-        distance = random.uniform(0, self.max_distance) 
+        distance = random.uniform(0, self.max_trans) 
         # Update the coordinates of the particle
         trial_system = np.copy(self.system)
-        trial_system[move_idx][0] += distance * np.cos(direction) 
-        trial_system[move_idx][1] += distance * np.sin(direction)
+        new_x = trial_system[move_idx][0] + distance * np.cos(direction)
+        new_y = trial_system[move_idx][1] + distance * np.sin(direction)
+        if new_x > L/2:
+            new_x -= L
+        elif new_x < L/2:
+            new_x += L
+        if new_y > L/2:
+            new_y -= L
+        elif new_y < L/2:
+            new_y += L/2
+        trial_system[move_idx][0] = new_x 
+        trial_system[move_idx][1] = new_y 
         return trial_system, move_idx
 
     def run(self, n_steps=100):
@@ -95,11 +110,9 @@ class Simulation:
         for i in range(n_steps):
             trial_system, move_idx = trial_move()
             # Check for overlapping particles
-            if self.check_overlap(trial_system, move_idx):
-                # Move resulted in spheres overlapping. Don't update system
-                pass
-            else: # Move doesn't result in overlapping particles
-                trial_energy = self.calculate_energy(trial_system)
+            overlap = self.check_overlap(trial_system, move_idx)
+            trial_energy = self.calculate_energy(trial_system, overlap)
+            if np.isfinite(trial_energy):
                 delta_U = trial_energy - self.energy
                 if delta_U <= 0:
                     # update self.system
@@ -111,7 +124,9 @@ class Simulation:
                         self.system = trial_system
                         self.accepted_moves += 1
                     else:
-                        pass
+                        self.rejected_moves += 1
+            else: # Energy is infinite (overlapping hard spheres)
+                self.rejected_moves += 1
 
             if i % self.write_freq == 0:
                 self.energies.append(self.energy)
