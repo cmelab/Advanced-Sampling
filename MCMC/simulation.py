@@ -1,40 +1,64 @@
 import numpy as np
 import itertools
+import math
 
 class Simulation:
-    def __init__(self, n_density=0.5, N=10, kT=1.0, write_freq=5):
+    def __init__(self, n_density=0.5, r=0.1, L=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5):
         self.n_density = n_density
-        self.N = N
+        self.r = r
+        self.L = L
         self.kT = kT
-        self.n_particles = (N*N) * n_density
-        self.grid_indices = list(itertools.product(np.arange(self.N), np.arange(self.N)))
+        self.r_cut = r_cut
+        self.max_trans = max_trans
         self.system = self._init_system()
-        self.energy = self.calculate_energy(self.system)
         self.timestep = 0
         self.system_history = []
+        self.energies = []
+        self.accepted_moves = 0
+        self.tps = None
         self.write_freq = write_freq
+
+
+    @property
+    def n_particles(self):
+        """
+        Calculate number of disks from the number density, disk radius and box size.
+        :return: number of particles.
+        """
+        n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
+        if n_particles == 0:
+            raise ValueError("cannot fit any disk with this density! "
+                             "Either decrease density/disk radius or increase box size.")
+
+    @property
+    def energy(self):
+        return self.calculate_energy(self.system)
 
     def _init_system(self):
         """
-        Initialize 2D NxN array, randomly putting particles in the grid.
-        occupied sites are 1 and empty sites are 0.
-        :return: A 2D numpy array of shape (N, N).
+        Initialize an array of 2D positions, randomly putting disk in the box.
+        x and y coordinates are between -L/2 and L/2.
+        :return: A 2D numpy array of shape (self.n_particles, 2).
         """
         return NotImplementedError
 
-    def find_neighbors(self, coordinate):
+
+    def check_overlap(self, coord1, coord2):
         """
-        List of neighbors of a coordinate.
-        Note: account for grid edge.
-        :param coordinate: (x,y) coordinate
-        :return: List of neighbors (x,y)
+        Check if two disks of radius r overlap.
+        :param coord1: (x, y) coordinate of disk 1 center.
+        :param coord2: (x, y) coordinate of disk 2 center.
+        :return: True if they overlap, else False.
         """
-        return NotImplementedError
+        d = math.sqrt(math.pow((coord1[0] - coord2[0]), 2) + math.pow((coord1[1] - coord2[1]), 2))
+        if d < (2 * self.r):
+            return True
+        else:
+            return False
 
     def calculate_energy(self, system):
         """
-        Calculates internal energy of the system based on neighbors.
-        For each immediate neighbor --> U += -1
+        Calculates internal energy of the system based on neighbors distance.
         :param system: The system to calculate energy for.
         :return: Energy value.
         """
