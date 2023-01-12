@@ -22,7 +22,6 @@ class Simulation:
         self.tps = None
         self.write_freq = write_freq
 
-
     @property
     def n_particles(self):
         """
@@ -69,48 +68,38 @@ class Simulation:
         return NotImplementedError
 
     def trial_move(self):
-        """
-        Initiate a trial move.
-            1) Select a random occupied site
-            2) Select a random target site
-            3) Calculate energy change (Delta U)
-            4) If (Delta U) <= 0:
-                Update system and energy
-            5) If (Delta U) > 0:
-                calculate p=exp(-(Delta U)/KT)
-                generate a random number p'
-                if p' < p : Accept else reject
-        """
-        # Random choose a particle:
-        particle_idx = random.randint(0, self.system.shape[0])
+        """"""
+        # Pick a random particle:
+        move_idx = random.randint(0, self.system.shape[0])
         # Uniformly sample a direction and move distance
         direction = random.uniform(0, math.pi)
         distance = random.uniform(0, self.max_distance) 
         # Update the coordinates of the particle
-        _system = np.copy(self.system)
-        _system[particle_idx][0] += distance * np.cos(direction) 
-        _system[particle_idx][1] += distance * np.sin(direction)
-        return _system, particle_idx
+        trial_system = np.copy(self.system)
+        trial_system[move_idx][0] += distance * np.cos(direction) 
+        trial_system[move_idx][1] += distance * np.sin(direction)
+        return trial_system, move_idx
 
     def run(self, n_steps=100):
         """Run MCMC for n number of steps."""
         start = time.time()
         for i in range(n_steps):
-            trial_system, moved_idx = trial_move()
+            trial_system, move_idx = trial_move()
             # Check for overlapping particles
-            if self.check_overlap(trial_system, moved_idx):
-                # Moved resulted in spheres overlapping
+            if self.check_overlap(trial_system, move_idx):
+                # Move resulted in spheres overlapping. Don't update system
                 pass
             else: # Move doesn't result in overlapping particles
                 trial_energy = self.calculate_energy(trial_system)
                 delta_U = trial_energy - self.energy
                 if delta_U <= 0:
                     # update self.system
+                    self.system = trial_system
                     self.accepted_moves += 1
                 else:
                     rand_num = random.uniform(0, 1)
                     if np.exp(-delta_U/self.kT) <= rand_num:
-                        # update system
+                        self.system = trial_system
                         self.accepted_moves += 1
                     else:
                         pass
@@ -120,7 +109,6 @@ class Simulation:
                 self.system_history.append(self.system)
 
             self.timestep += 1
-
         end = time.time()
         self.tps = np.round(n_steps / (end-start), 3)
 
