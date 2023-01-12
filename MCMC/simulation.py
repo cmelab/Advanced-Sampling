@@ -1,15 +1,36 @@
-import numpy as np
 import itertools
 import math
 
+import numpy as np
+
+from utils import inverse_distance_energy
+
+
 class Simulation:
-    def __init__(self, n_density=0.5, r=0.1, L=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5):
+    def __init__(self, n_density=0.5, r=0.1, r_factor=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
+                 energy_func=inverse_distance_energy):
+        """
+
+        :param n_density: Number density.
+        :param r: Disk radius.
+        :param r_factor: Box length is r * r_factor.
+        :param kT: Kinetic temperature.
+        :param r_cut: Neighbor distance cut off.
+        :param max_trans: Max move size.
+        :param write_freq: Save system history frequency.
+        :param energy_func: Function to calculate energy.
+        """
         self.n_density = n_density
         self.r = r
-        self.L = L
+        self.r_factor = r_factor
+        self.L = r * r_factor
         self.kT = kT
         self.r_cut = r_cut
         self.max_trans = max_trans
+        self.n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
+        if self.n_particles == 0:
+            raise ValueError("cannot fit any disk with this density! "
+                             "Either decrease density/disk radius or increase box size.")
         self.system = self._init_system()
         self.timestep = 0
         self.system_history = []
@@ -17,18 +38,7 @@ class Simulation:
         self.accepted_moves = 0
         self.tps = None
         self.write_freq = write_freq
-
-
-    @property
-    def n_particles(self):
-        """
-        Calculate number of disks from the number density, disk radius and box size.
-        :return: number of particles.
-        """
-        n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
-        if n_particles == 0:
-            raise ValueError("cannot fit any disk with this density! "
-                             "Either decrease density/disk radius or increase box size.")
+        self.energy_func = energy_func
 
     @property
     def energy(self):
@@ -44,19 +54,24 @@ class Simulation:
         np.random.randint(array, high=1, size=self.N)
         return NotImplementedError
 
-
-    def check_overlap(self, coord1, coord2):
+    def check_overlap(self, system, index):
         """
-        Check if two disks of radius r overlap.
-        :param coord1: (x, y) coordinate of disk 1 center.
-        :param coord2: (x, y) coordinate of disk 2 center.
-        :return: True if they overlap, else False.
+        Check if particle with specified index overlpas with the other particles in the system.
+        :param system: 2D array of particle positions.
+        :param index: index of the particle.
+        :return: True if ther is any overlap, else False.
         """
-        d = math.sqrt(math.pow((coord1[0] - coord2[0]), 2) + math.pow((coord1[1] - coord2[1]), 2))
-        if d < (2 * self.r):
-            return True
-        else:
-            return False
+        coord1 = system[index]
+        for i, coord2 in enumerate(system):
+            if i == index:
+                continue
+            d = np.linalg.norm(coord1 - coord2)
+            # periodic boundary check
+            if d >= (self.L/2):
+                d -= self.L
+            if d < (2 * self.r):
+                return True
+        return False
 
     def calculate_energy(self, system):
         """
@@ -64,7 +79,15 @@ class Simulation:
         :param system: The system to calculate energy for.
         :return: Energy value.
         """
-        return NotImplementedError
+        distances = []
+        for (i, j) in itertools.combinations(np.arange(self.n_particles), 2):
+            d = np.linalg.norm(system[i] - system[j])
+            # periodic boundary check
+            if d >= (self.L/2):
+                d -= self.L
+            if d <= self.r_cut:
+                distances.append(d)
+        return self.energy_func(np.asarray(distances))
 
     def trial_move(self):
         """
