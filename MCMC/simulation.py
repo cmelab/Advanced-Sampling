@@ -7,13 +7,13 @@ from utils import inverse_distance_energy
 
 
 class Simulation:
-    def __init__(self, n_density=0.5, r=0.1, L=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
+    def __init__(self, n_density=0.5, r=0.1, r_factor=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
                  energy_func=inverse_distance_energy):
         """
 
         :param n_density: Number density.
         :param r: Disk radius.
-        :param L: Box length.
+        :param r_factor: Box length is r * r_factor.
         :param kT: Kinetic temperature.
         :param r_cut: Neighbor distance cut off.
         :param max_trans: Max move size.
@@ -22,7 +22,8 @@ class Simulation:
         """
         self.n_density = n_density
         self.r = r
-        self.L = L
+        self.r_factor = r_factor
+        self.L = r * r_factor
         self.kT = kT
         self.r_cut = r_cut
         self.max_trans = max_trans
