@@ -1,9 +1,25 @@
-import numpy as np
 import itertools
 import math
 
+import numpy as np
+
+from utils import inverse_distance_energy
+
+
 class Simulation:
-    def __init__(self, n_density=0.5, r=0.1, L=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5):
+    def __init__(self, n_density=0.5, r=0.1, L=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
+                 energy_func=inverse_distance_energy):
+        """
+
+        :param n_density: Number density.
+        :param r: Disk radius.
+        :param L: Box length.
+        :param kT: Kinetic temperature.
+        :param r_cut: Neighbor distance cut off.
+        :param max_trans: Max move size.
+        :param write_freq: Save system history frequency.
+        :param energy_func: Function to calculate energy.
+        """
         self.n_density = n_density
         self.r = r
         self.L = L
@@ -17,6 +33,7 @@ class Simulation:
         self.accepted_moves = 0
         self.tps = None
         self.write_freq = write_freq
+        self.energy_func = energy_func
 
 
     @property
@@ -53,7 +70,7 @@ class Simulation:
         for i, coord2 in enumerate(system):
             if i == index:
                 continue
-            d = math.sqrt(math.pow((coord1[0] - coord2[0]), 2) + math.pow((coord1[1] - coord2[1]), 2))
+            d = np.linalg.norm(coord1 - coord2)
             # periodic boundary check
             if d >= (self.L/2):
                 d -= self.L
@@ -67,7 +84,15 @@ class Simulation:
         :param system: The system to calculate energy for.
         :return: Energy value.
         """
-        return NotImplementedError
+        distances = []
+        for (i, j) in itertools.combinations(np.arange(self.n_particles), 2):
+            d = np.linalg.norm(system[i] - system[j])
+            # periodic boundary check
+            if d >= (self.L/2):
+                d -= self.L
+            if d <= self.r_cut:
+                distances.append(d)
+        return self.energy_func(np.asarray(distances))
 
     def trial_move(self):
         """
