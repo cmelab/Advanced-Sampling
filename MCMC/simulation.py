@@ -51,7 +51,7 @@ class Simulation:
 
     @property
     def acceptance_ratio(self):
-        return self.accepted_moves / self.rejected_moves
+        return self.accepted_moves / self.timestep
 
     @property
     def energy(self):
@@ -108,10 +108,10 @@ class Simulation:
         direction = random.uniform(0, math.pi)
         distance = random.uniform(0, self.max_trans) 
         # Update the coordinates of the particle
-        trial_system = np.copy(self.system)
+        trial_system = np.copy(self.system) #TODO: This isn't a big deal now, but if we're copying the system for EVERY trial move, I expect this to become a performance bottleneck eventually. Instead, we can have two "systems" that persist in memory (using them appropriately) , rather than creating and deleting an array every step. 
         new_x = trial_system[move_idx][0] + distance * np.cos(direction)
         new_y = trial_system[move_idx][1] + distance * np.sin(direction)
-        if new_x > L/2:
+        if new_x > L/2: #TODO: Currently what happens if new_x or new_y is == L/2?
             new_x -= L
         elif new_x < L/2:
             new_x += L
