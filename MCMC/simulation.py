@@ -1,23 +1,49 @@
-import numpy as np
 import itertools
 import math
+import random
+
+import numpy as np
+
+
+import numpy as np
+
+from utils import inverse_distance_energy
+
 
 class Simulation:
-    def __init__(self, n_density=0.5, r=0.1, n_particles=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5):
+  def __init__(self, n_density=0.5, n_particles=5, r=0.1, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
+                 energy_func=inverse_distance_energy):
+        """
+        :param n_density: Number density.
+        :param r: Disk radius.
+        :param r_factor: Box length is r * r_factor.
+        :param kT: Kinetic temperature.
+        :param r_cut: Neighbor distance cut off.
+        :param max_trans: Max move size.
+        :param write_freq: Save system history frequency.
+        :param energy_func: Function to calculate energy.
+        """
         self.n_density = n_density
         self.r = r
-	self.n_particles = n_particles
+        self.r_factor = r_factor
+        self.n_particles = n_particles
+        self.L = (math.pow(self.n_particles,0.5))/(math.pow(self.n_density,0.5))
         self.kT = kT
         self.r_cut = r_cut
         self.max_trans = max_trans
-	self.L = (math.pow(self.n_particles,0.5))/(math.pow(self.n_density,0.5))
         self.system = self._init_system()
         self.timestep = 0
+        self.tps = None
         self.system_history = []
         self.energies = []
         self.accepted_moves = 0
+        self.rejected_moves = 0
         self.tps = None
         self.write_freq = write_freq
+        self.energy_func = energy_func
+    @property
+    def acceptance_ratio(self):
+        return self.accepted_moves / self.rejected_moves
 
     @property
     def energy(self):
@@ -56,33 +82,70 @@ class Simulation:
         :param system: The system to calculate energy for.
         :return: Energy value.
         """
-        return NotImplementedError
+        distances = []
+        for (i, j) in itertools.combinations(np.arange(self.n_particles), 2):
+            d = np.linalg.norm(system[i] - system[j])
+            # periodic boundary check
+            if d >= (self.L/2):
+                d -= self.L
+            if d <= self.r_cut:
+                distances.append(d)
+        return self.energy_func(np.asarray(distances))
 
     def trial_move(self):
-        """
-        Initiate a trial move.
-            1) Select a random occupied site
-            2) Select a random target site
-            3) Calculate energy change (Delta U)
-            4) If (Delta U) <= 0:
-                Update system and energy
-            5) If (Delta U) > 0:
-                calculate p=exp(-(Delta U)/KT)
-                generate a random number p'
-                if p' < p : Accept else reject
-        """
-        return NotImplementedError
+        """"""
+        # Pick a random particle:
+        move_idx = random.randint(0, self.system.shape[0])
+        # Uniformly sample a direction and move distance
+        direction = random.uniform(0, math.pi)
+        distance = random.uniform(0, self.max_trans) 
+        # Update the coordinates of the particle
+        trial_system = np.copy(self.system)
+        new_x = trial_system[move_idx][0] + distance * np.cos(direction)
+        new_y = trial_system[move_idx][1] + distance * np.sin(direction)
+        if new_x > L/2:
+            new_x -= L
+        elif new_x < L/2:
+            new_x += L
+        if new_y > L/2:
+            new_y -= L
+        elif new_y < L/2:
+            new_y += L/2
+        trial_system[move_idx][0] = new_x 
+        trial_system[move_idx][1] = new_y 
+        return trial_system, move_idx
 
     def run(self, n_steps=100):
         """Run MCMC for n number of steps."""
+        start = time.time()
         for i in range(n_steps):
-            # step 1: Do trial move
+            trial_system, move_idx = trial_move()
+            # Check for overlapping particles
+            overlap = self.check_overlap(trial_system, move_idx)
+            trial_energy = self.calculate_energy(trial_system, overlap)
+            if np.isfinite(trial_energy):
+                delta_U = trial_energy - self.energy
+                if delta_U <= 0:
+                    # update self.system
+                    self.system = trial_system
+                    self.accepted_moves += 1
+                else:
+                    rand_num = random.uniform(0, 1)
+                    if np.exp(-delta_U/self.kT) <= rand_num:
+                        self.system = trial_system
+                        self.accepted_moves += 1
+                    else:
+                        self.rejected_moves += 1
+            else: # Energy is infinite (overlapping hard spheres)
+                self.rejected_moves += 1
 
             if i % self.write_freq == 0:
-                # step 2: append to system history
-                continue
+                self.energies.append(self.energy)
+                self.system_history.append(self.system)
 
             self.timestep += 1
+        end = time.time()
+        self.tps = np.round(n_steps / (end-start), 3)
 
     def visualize(self, save_path=""):
         """
