@@ -11,12 +11,11 @@ from utils import inverse_distance_energy
 
 
 class Simulation:
-  def __init__(self, n_density=0.5, n_particles=5, r=0.1, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
+  def __init__(self, n_density=0.5, n_particles=5, r=0.5, kT=1.0, r_cut=1, max_trans=0.5, write_freq=5,
                  energy_func=inverse_distance_energy):
         """
         :param n_density: Number density.
         :param r: Disk radius.
-        :param r_factor: Box length is r * r_factor.
         :param kT: Kinetic temperature.
         :param r_cut: Neighbor distance cut off.
         :param max_trans: Max move size.
@@ -33,17 +32,21 @@ class Simulation:
         self.max_trans = max_trans
         self.system = self._init_system()
         self.timestep = 0
-        self.tps = None
         self.system_history = []
         self.energies = []
         self.accepted_moves = 0
         self.rejected_moves = 0
-        self.tps = None
+        self._tps = [] 
         self.write_freq = write_freq
         self.energy_func = energy_func
+
+    @property
+    def tps(self):
+        return np.mean(self._tps)
+
     @property
     def acceptance_ratio(self):
-        return self.accepted_moves / self.rejected_moves
+        return self.accepted_moves / self.timestep
 
     @property
     def energy(self):
@@ -100,10 +103,10 @@ class Simulation:
         direction = random.uniform(0, math.pi)
         distance = random.uniform(0, self.max_trans) 
         # Update the coordinates of the particle
-        trial_system = np.copy(self.system)
+        trial_system = np.copy(self.system) #TODO: This isn't a big deal now, but if we're copying the system for EVERY trial move, I expect this to become a performance bottleneck eventually. Instead, we can have two "systems" that persist in memory (using them appropriately) , rather than creating and deleting an array every step. 
         new_x = trial_system[move_idx][0] + distance * np.cos(direction)
         new_y = trial_system[move_idx][1] + distance * np.sin(direction)
-        if new_x > L/2:
+        if new_x > L/2: #TODO: Currently what happens if new_x or new_y is == L/2?
             new_x -= L
         elif new_x < L/2:
             new_x += L
@@ -120,13 +123,11 @@ class Simulation:
         start = time.time()
         for i in range(n_steps):
             trial_system, move_idx = trial_move()
-            # Check for overlapping particles
             overlap = self.check_overlap(trial_system, move_idx)
             trial_energy = self.calculate_energy(trial_system, overlap)
             if np.isfinite(trial_energy):
                 delta_U = trial_energy - self.energy
-                if delta_U <= 0:
-                    # update self.system
+                if delta_U <= 0: # Update self.system
                     self.system = trial_system
                     self.accepted_moves += 1
                 else:
@@ -145,7 +146,7 @@ class Simulation:
 
             self.timestep += 1
         end = time.time()
-        self.tps = np.round(n_steps / (end-start), 3)
+        self._tps.append(np.round(n_steps / (end-start), 3))
 
     def visualize(self, save_path=""):
         """
