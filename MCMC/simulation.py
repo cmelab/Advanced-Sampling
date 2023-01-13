@@ -114,9 +114,9 @@ class Simulation:
         elif x < -self.L/2:
             x += self.L
         if y > self.L/2:
-            y -= L
+            y -= self.L
         elif y < -self.L/2:
-            y += self.L/2
+            y += self.L
 
         return x, y
 
