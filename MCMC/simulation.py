@@ -8,7 +8,6 @@ class Simulation:
     def __init__(self, n_density=0.5, r=0.1, r_factor=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
                  energy_func=None, hard_sphere=True):
         """
-
         :param n_density: Number density.
         :param r: Disk radius.
         :param r_factor: Box length is r * r_factor.
@@ -31,16 +30,19 @@ class Simulation:
                              "Either decrease density/disk radius or increase box size.")
         self.system = self._init_system()
         self.timestep = 0
-        self.tps = None
         self.system_history = []
         self.energies = []
         self.accepted_moves = 0
         self.rejected_moves = 0
-        self.tps = None
+        self._tps = [] 
         self.write_freq = write_freq
         self.energy_func = energy_func
         self.hard_sphere = hard_sphere
     
+    @property
+    def tps(self):
+        return np.mean(self._tps)
+
     @property
     def acceptance_ratio(self):
         return self.accepted_moves / self.rejected_moves
@@ -109,13 +111,13 @@ class Simulation:
         :param y: y coordinate
         :return: updated x and y coordinates
         """
-        if x > self.L/2:
+        if x >= self.L/2:
             x -= self.L
-        elif x < -self.L/2:
+        elif x <= -self.L/2:
             x += self.L
-        if y > self.L/2:
+        if y >= self.L/2:
             y -= self.L
-        elif y < -self.L/2:
+        elif y <= -self.L/2:
             y += self.L
 
         return x, y
@@ -141,13 +143,11 @@ class Simulation:
         start = time.time()
         for i in range(n_steps):
             trial_system, move_idx = trial_move()
-            # Check for overlapping particles
             overlap = self.check_overlap(trial_system, move_idx)
             trial_energy = self.calculate_energy(trial_system, overlap)
             if np.isfinite(trial_energy):
                 delta_U = trial_energy - self.energy
-                if delta_U <= 0:
-                    # update self.system
+                if delta_U <= 0: # Update self.system
                     self.system = trial_system
                     self.accepted_moves += 1
                 else:
@@ -166,7 +166,7 @@ class Simulation:
 
             self.timestep += 1
         end = time.time()
-        self.tps = np.round(n_steps / (end-start), 3)
+        self._tps.append(np.round(n_steps / (end-start), 3))
 
     def visualize(self, save_path=""):
         """
