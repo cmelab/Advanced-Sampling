@@ -111,11 +111,11 @@ class Simulation:
         """
         if x > self.L/2:
             x -= self.L
-        elif x < self.L/2:
+        elif x < -self.L/2:
             x += self.L
         if y > self.L/2:
             y -= L
-        elif y < self.L/2:
+        elif y < -self.L/2:
             y += self.L/2
 
         return x, y
