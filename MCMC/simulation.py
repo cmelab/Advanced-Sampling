@@ -5,12 +5,11 @@ import random
 
 
 class Simulation:
-    def __init__(self, n_density=0.5, r=0.1, r_factor=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
-                 energy_func=None, hard_sphere=True):
+  def __init__(self, n_density=0.5, n_particles=5, r=0.5, kT=1.0, r_cut=1, max_trans=0.5, write_freq=5,
+                 energy_func=inverse_distance_energy):
         """
         :param n_density: Number density.
         :param r: Disk radius.
-        :param r_factor: Box length is r * r_factor.
         :param kT: Kinetic temperature.
         :param r_cut: Neighbor distance cut off.
         :param max_trans: Max move size.
@@ -20,14 +19,11 @@ class Simulation:
         self.n_density = n_density
         self.r = r
         self.r_factor = r_factor
-        self.L = r * r_factor
+        self.n_particles = n_particles
+        self.L = (math.pow(self.n_particles,0.5))/(math.pow(self.n_density,0.5))
         self.kT = kT
         self.r_cut = r_cut
         self.max_trans = max_trans
-        self.n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
-        if self.n_particles == 0:
-            raise ValueError("cannot fit any disk with this density! "
-                             "Either decrease density/disk radius or increase box size.")
         self.system = self._init_system()
         self.timestep = 0
         self.system_history = []
