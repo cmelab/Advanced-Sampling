@@ -127,8 +127,8 @@ class Simulation:
         direction = random.uniform(0, math.pi)
         distance = random.uniform(0, self.max_trans) 
         # Update the coordinates of the particle
-        new_x = trial_system[move_idx][0] + distance * np.cos(direction)
-        new_y = trial_system[move_idx][1] + distance * np.sin(direction)
+        new_x = self.system[move_idx][0] + distance * np.cos(direction)
+        new_y = self.system[move_idx][1] + distance * np.sin(direction)
         new_x, new_y = self._periodic_boundary(new_x, new_y)
         return move_idx, original_coords, (new_x, new_y) 
 
