@@ -5,8 +5,18 @@ import random
 
 
 class Simulation:
-    def __init__(self, n_density=0.5, n_particles=5, r=0.5, kT=1.0, r_cut=1, max_trans=0.5, write_freq=5,
-                 energy_func=None, hard_sphere=True):
+    def __init__(
+            self,
+            n_density=0.5,
+            n_particles=5,
+            r=0.5,
+            kT=1.0,
+            r_cut=1,
+            max_trans=0.5,
+            energy_write_freq=100,
+            trajectoryy_write_freq=10000,
+            energy_func=None,
+            hard_sphere=True):
         """
         :param n_density: Number density.
         :param r: Disk radius.
@@ -122,7 +132,7 @@ class Simulation:
         """"""
         # Pick a random particle; store initial value:
         move_idx = random.randint(0, self.system.shape[0])
-        original_coords = self.system[move_idx]
+        original_coords = tuple(self.system[move_idx])
         # Uniformly sample a direction and move distance
         direction = random.uniform(0, math.pi)
         distance = random.uniform(0, self.max_trans) 
@@ -158,9 +168,10 @@ class Simulation:
                 self.system[move_idx] = original_coords
                 self.rejected_moves += 1
 
-            if i % self.write_freq == 0:
+            if i % self.energy_write_freq == 0:
                 self.energies.append(self.energy)
-                self.system_history.append(self.system)
+            if i % self.trajectory_write_freq == 0:
+                self.system_history.append(np.copy(self.system))
 
             self.timestep += 1
         end = time.time()
