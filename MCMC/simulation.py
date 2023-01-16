@@ -44,15 +44,26 @@ class Simulation:
     def energy(self):
         return self.calculate_energy(self.system)
 
-    def _init_system(self):
-        """
-        Initialize an array of 2D positions, randomly putting disk in the box.
-        x and y coordinates are between -L/2 and L/2.
-        :return: A 2D numpy array of shape (self.n_particles, 2).
-        """
-        array = np.zeros((self.N, self.N),dtype = int)
-        np.random.randint(array, high=1, size=self.N)
-        return NotImplementedError
+    def _init_system(self, L):
+        self.system = np.zeros((self.n_particles,2))
+        x = 0
+        y = -math.sqrt(3/4)
+        nx = math.floor(L)
+        print(nx)
+        for i in range(self.n_particles):
+            if i % nx == 0:
+                x = .5 * (i//nx)
+                y += math.sqrt(3/4)
+            self.system[i][0] = x
+            self.system[i][1] = y
+            x += 1
+        for i in range(self.n_particles):
+            if self.system[i][0] > L/2:
+                self.system[i][0] -= L
+            if self.system[i][1] > L/2:
+                self.system[i][1] -= L
+                
+        return self.system
 
     def check_overlap(self, system, index):
         """
