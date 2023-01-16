@@ -5,8 +5,18 @@ import random
 
 
 class Simulation:
-    def __init__(self, n_density=0.5, n_particles=5, r=0.5, kT=1.0, r_cut=1, max_trans=0.5, write_freq=5,
-                 energy_func=None, hard_sphere=True):
+    def __init__(
+            self,
+            n_density=0.5,
+            n_particles=5,
+            r=0.5,
+            kT=1.0,
+            r_cut=1,
+            max_trans=0.5,
+            energy_write_freq=100,
+            trajectoryy_write_freq=10000,
+            energy_func=None,
+            hard_sphere=True):
         """
         :param n_density: Number density.
         :param r: Disk radius.
@@ -120,48 +130,48 @@ class Simulation:
 
     def trial_move(self):
         """"""
-        # Pick a random particle:
+        # Pick a random particle; store initial value:
         move_idx = random.randint(0, self.system.shape[0])
+        original_coords = tuple(self.system[move_idx])
         # Uniformly sample a direction and move distance
         direction = random.uniform(0, math.pi)
         distance = random.uniform(0, self.max_trans) 
         # Update the coordinates of the particle
-        trial_system = np.copy(self.system)  #TODO: This isn't a big deal now, but if we're copying the system for
-        # EVERY trial move, I expect this to become a performance bottleneck eventually. Instead,
-        # we can have two "systems" that persist in memory (using them appropriately) , rather than creating and
-        # deleting an array every step.
-        new_x = trial_system[move_idx][0] + distance * np.cos(direction)
-        new_y = trial_system[move_idx][1] + distance * np.sin(direction)
+        new_x = self.system[move_idx][0] + distance * np.cos(direction)
+        new_y = self.system[move_idx][1] + distance * np.sin(direction)
         new_x, new_y = self._periodic_boundary(new_x, new_y)
-        trial_system[move_idx][0] = new_x 
-        trial_system[move_idx][1] = new_y 
-        return trial_system, move_idx
+        return move_idx, original_coords, (new_x, new_y) 
 
     def run(self, n_steps=100):
         """Run MCMC for n number of steps."""
         start = time.time()
         for i in range(n_steps):
-            trial_system, move_idx = trial_move()
-            overlap = self.check_overlap(trial_system, move_idx)
-            trial_energy = self.calculate_energy(trial_system, overlap)
+            initial_energy = self.energy()
+            # Make move; get particle, original and new coordinates
+            move_idx, original_coords, new_coords = trial_move()
+            self.system[move_idx] = new_coords
+            overlap = self.check_overlap(self.system, move_idx)
+            trial_energy = self.calculate_energy(self.system, overlap)
             if np.isfinite(trial_energy):
                 delta_U = trial_energy - self.energy
-                if delta_U <= 0:  # Update self.system
-                    self.system = trial_system
+                if delta_U <= 0:  # Move accepted; keep updated self.system 
                     self.accepted_moves += 1
                 else:
                     rand_num = random.uniform(0, 1)
                     if np.exp(-delta_U/self.kT) <= rand_num:
-                        self.system = trial_system
+                        # Move accepted; keep updated self.system
                         self.accepted_moves += 1
-                    else:
+                    else: # Move rejected; change self.system to prev state
+                        self.system[move_idx] = original_coords
                         self.rejected_moves += 1
             else: # Energy is infinite (overlapping hard spheres)
+                self.system[move_idx] = original_coords
                 self.rejected_moves += 1
 
-            if i % self.write_freq == 0:
+            if i % self.energy_write_freq == 0:
                 self.energies.append(self.energy)
-                self.system_history.append(self.system)
+            if i % self.trajectory_write_freq == 0:
+                self.system_history.append(np.copy(self.system))
 
             self.timestep += 1
         end = time.time()
