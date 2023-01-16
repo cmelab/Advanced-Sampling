@@ -120,43 +120,42 @@ class Simulation:
 
     def trial_move(self):
         """"""
-        # Pick a random particle:
+        # Pick a random particle; store initial value:
         move_idx = random.randint(0, self.system.shape[0])
+        original_coords = self.system[move_idx]
         # Uniformly sample a direction and move distance
         direction = random.uniform(0, math.pi)
         distance = random.uniform(0, self.max_trans) 
         # Update the coordinates of the particle
-        trial_system = np.copy(self.system)  #TODO: This isn't a big deal now, but if we're copying the system for
-        # EVERY trial move, I expect this to become a performance bottleneck eventually. Instead,
-        # we can have two "systems" that persist in memory (using them appropriately) , rather than creating and
-        # deleting an array every step.
         new_x = trial_system[move_idx][0] + distance * np.cos(direction)
         new_y = trial_system[move_idx][1] + distance * np.sin(direction)
         new_x, new_y = self._periodic_boundary(new_x, new_y)
-        trial_system[move_idx][0] = new_x 
-        trial_system[move_idx][1] = new_y 
-        return trial_system, move_idx
+        return move_idx, original_coords, (new_x, new_y) 
 
     def run(self, n_steps=100):
         """Run MCMC for n number of steps."""
         start = time.time()
         for i in range(n_steps):
-            trial_system, move_idx = trial_move()
-            overlap = self.check_overlap(trial_system, move_idx)
-            trial_energy = self.calculate_energy(trial_system, overlap)
+            initial_energy = self.energy()
+            # Make move; get particle, original and new coordinates
+            move_idx, original_coords, new_coords = trial_move()
+            self.system[move_idx] = new_coords
+            overlap = self.check_overlap(self.system, move_idx)
+            trial_energy = self.calculate_energy(self.system, overlap)
             if np.isfinite(trial_energy):
                 delta_U = trial_energy - self.energy
-                if delta_U <= 0:  # Update self.system
-                    self.system = trial_system
+                if delta_U <= 0:  # Move accepted; keep updated self.system 
                     self.accepted_moves += 1
                 else:
                     rand_num = random.uniform(0, 1)
                     if np.exp(-delta_U/self.kT) <= rand_num:
-                        self.system = trial_system
+                        # Move accepted; keep updated self.system
                         self.accepted_moves += 1
-                    else:
+                    else: # Move rejected; change self.system to prev state
+                        self.system[move_idx] = original_coords
                         self.rejected_moves += 1
             else: # Energy is infinite (overlapping hard spheres)
+                self.system[move_idx] = original_coords
                 self.rejected_moves += 1
 
             if i % self.write_freq == 0:
