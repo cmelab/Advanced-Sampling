@@ -52,7 +52,24 @@ class Simulation:
         x and y coordinates are between -L/2 and L/2.
         :return: A 2D numpy array of shape (self.n_particles, 2).
         """
-        return NotImplementedError
+        disks_per_row = math.floor((self.L - self.r) / (2 * self.r))
+        n_rows = math.ceil(self.n_particles / disks_per_row)
+        init_x_even = (-self.L / 2) + self.r
+        init_x_odd = (-self.L / 2) + (2 * self.r)
+        init_y = 2 * self.r
+        system = []
+        for i in np.arange(n_rows):
+            row_disk_counter = 0
+            if i % 2 == 0:
+                row_init_x = init_x_even
+            else:
+                row_init_x = init_x_odd
+            while row_disk_counter < disks_per_row and len(system) <= self.n_particles:
+                system.append([row_init_x + (row_disk_counter * 2 * self.r), init_y])
+                row_disk_counter += 1
+            init_y += 2 * self.r
+        system = np.asarray(system)
+        return system
 
     def check_overlap(self, system, index):
         """
