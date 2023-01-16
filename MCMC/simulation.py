@@ -5,12 +5,11 @@ import random
 
 
 class Simulation:
-    def __init__(self, n_density=0.5, r=0.1, r_factor=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
+    def __init__(self, n_density=0.5, n_particles=5, r=0.5, kT=1.0, r_cut=1, max_trans=0.5, write_freq=5,
                  energy_func=None, hard_sphere=True):
         """
         :param n_density: Number density.
         :param r: Disk radius.
-        :param r_factor: Box length is r * r_factor.
         :param kT: Kinetic temperature.
         :param r_cut: Neighbor distance cut off.
         :param max_trans: Max move size.
@@ -19,15 +18,11 @@ class Simulation:
         """
         self.n_density = n_density
         self.r = r
-        self.r_factor = r_factor
-        self.L = r * r_factor
+        self.n_particles = n_particles
+        self.L = (math.pow(self.n_particles, 0.5))/(math.pow(self.n_density, 0.5))
         self.kT = kT
         self.r_cut = r_cut
         self.max_trans = max_trans
-        self.n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
-        if self.n_particles == 0:
-            raise ValueError("cannot fit any disk with this density! "
-                             "Either decrease density/disk radius or increase box size.")
         self.system = self._init_system()
         self.timestep = 0
         self.system_history = []
@@ -38,14 +33,14 @@ class Simulation:
         self.write_freq = write_freq
         self.energy_func = energy_func
         self.hard_sphere = hard_sphere
-    
+
     @property
     def tps(self):
         return np.mean(self._tps)
 
     @property
     def acceptance_ratio(self):
-        return self.accepted_moves / self.rejected_moves
+        return self.accepted_moves / self.timestep
 
     @property
     def energy(self):
@@ -61,10 +56,10 @@ class Simulation:
 
     def check_overlap(self, system, index):
         """
-        Check if particle with specified index overlpas with the other particles in the system.
+        Check if particle with specified index overlaps with the other particles in the system.
         :param system: 2D array of particle positions.
         :param index: index of the particle.
-        :return: True if ther is any overlap, else False.
+        :return: True if there is any overlap, else False.
         """
         coord1 = system[index]
         for i, coord2 in enumerate(system):
@@ -79,6 +74,7 @@ class Simulation:
         """
         Calculates internal energy of the system based on neighbors distance.
         :param system: The system to calculate energy for.
+        :param overlap: If disk overlap exists.
         :return: Energy value.
         """
         if overlap and self.hard_sphere:
@@ -130,7 +126,10 @@ class Simulation:
         direction = random.uniform(0, math.pi)
         distance = random.uniform(0, self.max_trans) 
         # Update the coordinates of the particle
-        trial_system = np.copy(self.system)
+        trial_system = np.copy(self.system)  #TODO: This isn't a big deal now, but if we're copying the system for
+        # EVERY trial move, I expect this to become a performance bottleneck eventually. Instead,
+        # we can have two "systems" that persist in memory (using them appropriately) , rather than creating and
+        # deleting an array every step.
         new_x = trial_system[move_idx][0] + distance * np.cos(direction)
         new_y = trial_system[move_idx][1] + distance * np.sin(direction)
         new_x, new_y = self._periodic_boundary(new_x, new_y)
@@ -147,7 +146,7 @@ class Simulation:
             trial_energy = self.calculate_energy(trial_system, overlap)
             if np.isfinite(trial_energy):
                 delta_U = trial_energy - self.energy
-                if delta_U <= 0: # Update self.system
+                if delta_U <= 0:  # Update self.system
                     self.system = trial_system
                     self.accepted_moves += 1
                 else:
@@ -182,4 +181,3 @@ class Simulation:
         :param save_path: Path to save the trajectory.
         """
         return NotImplementedError
-
