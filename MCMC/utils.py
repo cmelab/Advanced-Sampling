@@ -19,3 +19,4 @@ def inverse_distance_repulsive(distances):
     :return: Total energy.
     """
     return (1. / np.power(distances, 2)).sum()
+
