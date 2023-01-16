@@ -1,7 +1,10 @@
 import itertools
 import math
+import matplotlib.pyplot as plt
 import numpy as np
+import os
 import random
+import time
 
 
 class Simulation:
@@ -14,7 +17,7 @@ class Simulation:
             r_cut=1,
             max_trans=0.5,
             energy_write_freq=100,
-            trajectoryy_write_freq=10000,
+            trajectory_write_freq=10000,
             energy_func=None,
             hard_sphere=True):
         """
@@ -40,7 +43,8 @@ class Simulation:
         self.accepted_moves = 0
         self.rejected_moves = 0
         self._tps = [] 
-        self.write_freq = write_freq
+        self.energy_write_freq = energy_write_freq
+        self.trajectory_write_freq = trajectory_write_freq
         self.energy_func = energy_func
         self.hard_sphere = hard_sphere
 
@@ -66,7 +70,7 @@ class Simulation:
         n_rows = math.ceil(self.n_particles / disks_per_row)
         init_x_even = (-self.L / 2) + self.r
         init_x_odd = (-self.L / 2) + (2 * self.r)
-        init_y = 2 * self.r
+        init_y = (-self.L / 2) +  self.r
         system = []
         for i in np.arange(n_rows):
             row_disk_counter = 0
@@ -124,7 +128,7 @@ class Simulation:
         dx = coord1[0] - coord2[0]
         dy = coord1[1] - coord2[1]
         dx, dy = self._periodic_boundary(dx, dy)
-        d = np.sqrt(np.pow(dx, 2) + np.pow(dy, 2))
+        d = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
         return d
 
     def _periodic_boundary(self, x, y):
@@ -148,7 +152,7 @@ class Simulation:
     def trial_move(self):
         """"""
         # Pick a random particle; store initial value:
-        move_idx = random.randint(0, self.system.shape[0])
+        move_idx = random.randint(0, self.system.shape[0]-1)
         original_coords = tuple(self.system[move_idx])
         # Uniformly sample a direction and move distance
         direction = random.uniform(0, math.pi)
@@ -163,14 +167,14 @@ class Simulation:
         """Run MCMC for n number of steps."""
         start = time.time()
         for i in range(n_steps):
-            initial_energy = self.energy()
+            initial_energy = self.energy
             # Make move; get particle, original and new coordinates
-            move_idx, original_coords, new_coords = trial_move()
+            move_idx, original_coords, new_coords = self.trial_move()
             self.system[move_idx] = new_coords
             overlap = self.check_overlap(self.system, move_idx)
             trial_energy = self.calculate_energy(self.system, overlap)
             if np.isfinite(trial_energy):
-                delta_U = trial_energy - self.energy
+                delta_U = trial_energy - initial_energy
                 if delta_U <= 0:  # Move accepted; keep updated self.system 
                     self.accepted_moves += 1
                 else:
@@ -194,12 +198,24 @@ class Simulation:
         end = time.time()
         self._tps.append(np.round(n_steps / (end-start), 3))
 
-    def visualize(self, save_path=""):
+    def visualize(self, frame_number=0, save_path=None):
         """
         Plot the current grid using matplotlib.
         :param save_path: Path to save figure
         """
-        return NotImplementedError
+        figure, axes = plt.subplots()
+        for i in self.system_history[frame_number]:
+            colored_circle = plt.Circle((i[0], i[1]), self.r)
+            axes.add_artist(colored_circle)
+        axes.set_aspect(1)
+        plt.title('System')
+        plt.ylim(-self.L / 2, self.L / 2)
+        plt.xlim(-self.L / 2, self.L / 2)
+        if save_path:
+            fig_name = "system_frame_" + str(frame_number)
+            plt.savefig(os.path.join(save_path, fig_name))
+        return plt
+
 
     def trajectory(self, save_path=""):
         """
