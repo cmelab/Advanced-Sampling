@@ -1,19 +1,25 @@
 import itertools
 import math
-
 import numpy as np
-
-from utils import inverse_distance_energy
+import random
 
 
 class Simulation:
-    def __init__(self, n_density=0.5, r=0.1, r_factor=5, kT=1.0, r_cut=1, max_trans=0.2, write_freq=5,
-                 energy_func=inverse_distance_energy):
+    def __init__(
+            self,
+            n_density=0.5,
+            n_particles=5,
+            r=0.5,
+            kT=1.0,
+            r_cut=1,
+            max_trans=0.5,
+            energy_write_freq=100,
+            trajectoryy_write_freq=10000,
+            energy_func=None,
+            hard_sphere=True):
         """
-
         :param n_density: Number density.
         :param r: Disk radius.
-        :param r_factor: Box length is r * r_factor.
         :param kT: Kinetic temperature.
         :param r_cut: Neighbor distance cut off.
         :param max_trans: Max move size.
@@ -22,23 +28,29 @@ class Simulation:
         """
         self.n_density = n_density
         self.r = r
-        self.r_factor = r_factor
-        self.L = r * r_factor
+        self.n_particles = n_particles
+        self.L = (math.pow(self.n_particles, 0.5))/(math.pow(self.n_density, 0.5))
         self.kT = kT
         self.r_cut = r_cut
         self.max_trans = max_trans
-        self.n_particles = math.floor((math.pow(self.L, 2) * self.n_density) / (math.pi * math.pow(self.r, 2)))
-        if self.n_particles == 0:
-            raise ValueError("cannot fit any disk with this density! "
-                             "Either decrease density/disk radius or increase box size.")
         self.system = self._init_system()
         self.timestep = 0
         self.system_history = []
         self.energies = []
         self.accepted_moves = 0
-        self.tps = None
+        self.rejected_moves = 0
+        self._tps = [] 
         self.write_freq = write_freq
         self.energy_func = energy_func
+        self.hard_sphere = hard_sphere
+
+    @property
+    def tps(self):
+        return np.mean(self._tps)
+
+    @property
+    def acceptance_ratio(self):
+        return self.accepted_moves / self.timestep
 
     @property
     def energy(self):
@@ -67,64 +79,116 @@ class Simulation:
 
     def check_overlap(self, system, index):
         """
-        Check if particle with specified index overlpas with the other particles in the system.
+        Check if particle with specified index overlaps with the other particles in the system.
         :param system: 2D array of particle positions.
         :param index: index of the particle.
-        :return: True if ther is any overlap, else False.
+        :return: True if there is any overlap, else False.
         """
         coord1 = system[index]
         for i, coord2 in enumerate(system):
             if i == index:
                 continue
-            d = np.linalg.norm(coord1 - coord2)
-            # periodic boundary check
-            if d >= (self.L/2):
-                d -= self.L
+            d = self._calculate_distance(coord1, coord2)
             if d < (2 * self.r):
                 return True
         return False
 
-    def calculate_energy(self, system):
+    def calculate_energy(self, system, overlap=False):
         """
         Calculates internal energy of the system based on neighbors distance.
         :param system: The system to calculate energy for.
+        :param overlap: If disk overlap exists.
         :return: Energy value.
         """
+        if overlap and self.hard_sphere:
+            return np.inf
+
+        if not self.energy_func:
+            return 0
+
         distances = []
         for (i, j) in itertools.combinations(np.arange(self.n_particles), 2):
-            d = np.linalg.norm(system[i] - system[j])
-            # periodic boundary check
-            if d >= (self.L/2):
-                d -= self.L
+            coord1 = system[i]
+            coord2 = system[j]
+            d = self._calculate_distance(coord1, coord2)
             if d <= self.r_cut:
                 distances.append(d)
+
         return self.energy_func(np.asarray(distances))
 
+    def _calculate_distance(self, coord1, coord2):
+        dx = coord1[0] - coord2[0]
+        dy = coord1[1] - coord2[1]
+        dx, dy = self._periodic_boundary(dx, dy)
+        d = np.sqrt(np.pow(dx, 2) + np.pow(dy, 2))
+        return d
+
+    def _periodic_boundary(self, x, y):
+        """
+        Check periodic boundary conditions and update x and y accordingly.
+        :param x: x coordinate
+        :param y: y coordinate
+        :return: updated x and y coordinates
+        """
+        if x >= self.L/2:
+            x -= self.L
+        elif x <= -self.L/2:
+            x += self.L
+        if y >= self.L/2:
+            y -= self.L
+        elif y <= -self.L/2:
+            y += self.L
+
+        return x, y
+
     def trial_move(self):
-        """
-        Initiate a trial move.
-            1) Select a random occupied site
-            2) Select a random target site
-            3) Calculate energy change (Delta U)
-            4) If (Delta U) <= 0:
-                Update system and energy
-            5) If (Delta U) > 0:
-                calculate p=exp(-(Delta U)/KT)
-                generate a random number p'
-                if p' < p : Accept else reject
-        """
-        return NotImplementedError
+        """"""
+        # Pick a random particle; store initial value:
+        move_idx = random.randint(0, self.system.shape[0])
+        original_coords = tuple(self.system[move_idx])
+        # Uniformly sample a direction and move distance
+        direction = random.uniform(0, math.pi)
+        distance = random.uniform(0, self.max_trans) 
+        # Update the coordinates of the particle
+        new_x = self.system[move_idx][0] + distance * np.cos(direction)
+        new_y = self.system[move_idx][1] + distance * np.sin(direction)
+        new_x, new_y = self._periodic_boundary(new_x, new_y)
+        return move_idx, original_coords, (new_x, new_y) 
 
     def run(self, n_steps=100):
         """Run MCMC for n number of steps."""
+        start = time.time()
         for i in range(n_steps):
-            # step 1: Do trial move
+            initial_energy = self.energy()
+            # Make move; get particle, original and new coordinates
+            move_idx, original_coords, new_coords = trial_move()
+            self.system[move_idx] = new_coords
+            overlap = self.check_overlap(self.system, move_idx)
+            trial_energy = self.calculate_energy(self.system, overlap)
+            if np.isfinite(trial_energy):
+                delta_U = trial_energy - self.energy
+                if delta_U <= 0:  # Move accepted; keep updated self.system 
+                    self.accepted_moves += 1
+                else:
+                    rand_num = random.uniform(0, 1)
+                    if np.exp(-delta_U/self.kT) <= rand_num:
+                        # Move accepted; keep updated self.system
+                        self.accepted_moves += 1
+                    else: # Move rejected; change self.system to prev state
+                        self.system[move_idx] = original_coords
+                        self.rejected_moves += 1
+            else: # Energy is infinite (overlapping hard spheres)
+                self.system[move_idx] = original_coords
+                self.rejected_moves += 1
 
-            if i % self.write_freq == 0:
-                # step 2: append to system history
-                continue
+            if i % self.energy_write_freq == 0:
+                self.energies.append(self.energy)
+            if i % self.trajectory_write_freq == 0:
+                self.system_history.append(np.copy(self.system))
 
             self.timestep += 1
+        end = time.time()
+        self._tps.append(np.round(n_steps / (end-start), 3))
 
     def visualize(self, save_path=""):
         """
@@ -140,4 +204,3 @@ class Simulation:
         :param save_path: Path to save the trajectory.
         """
         return NotImplementedError
-
