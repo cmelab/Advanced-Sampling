@@ -21,6 +21,7 @@ def inverse_distance_repulsive(distances):
     """
     return (1. / np.power(distances, 2)).sum()
 
+
 @jit(nopython=True)
 def pair_distances(pos_array, L, r_cut):
     distances = []
