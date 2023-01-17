@@ -5,6 +5,7 @@ import numpy as np
 import os
 import random
 import time
+from MCMC.utils import pair_distances
 
 
 class Simulation:
@@ -113,16 +114,9 @@ class Simulation:
 
         if not self.energy_func:
             return 0
-
-        distances = []
-        for (i, j) in itertools.combinations(np.arange(self.n_particles), 2):
-            coord1 = system[i]
-            coord2 = system[j]
-            d = self._calculate_distance(coord1, coord2)
-            if d <= self.r_cut:
-                distances.append(d)
-
-        return self.energy_func(np.asarray(distances))
+        else:
+            distances = pair_distances(self.system, self.L, self.r_cut) 
+            return self.energy_func(np.asarray(distances))
 
     def _calculate_distance(self, coord1, coord2):
         dx = coord1[0] - coord2[0]
