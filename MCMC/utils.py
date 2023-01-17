@@ -1,5 +1,19 @@
 import numpy as np
 from numba import jit
+import freud
+
+def rdf(sim_obj, n_frames, n_bins=50, r_max=None):
+    if not r_max:
+        r_max = (sim_obj.L/2)-sim_obj.r
+    box = [sim_obj.L, sim_obj. L,0]
+    rdf = freud.density.RDF(n_bins, r_max)
+    for points in sim_obj.system_history[-n_frames:]:
+        points = np.append(
+            points, np.zeros((points.shape[0], 1)),axis=1
+        )
+
+        rdf.compute((box,points))
+    return rdf
 
 
 def inverse_distance_attractive(distances):
