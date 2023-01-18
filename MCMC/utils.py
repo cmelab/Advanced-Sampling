@@ -3,10 +3,10 @@ import numpy as np
 from numba import jit
 
 
-def structure_factor(sim_obj, n_frames):
+def structure_factor(sim_obj, n_frames, num_k_values=100, k_max=10):
     box = [sim_obj.L, sim_obj.L,0]
     sf = freud.diffraction.StaticStructureFactorDebye(
-            num_k_values=100, k_max=10
+            num_k_values=num_k_values, k_max=k_max
             )
     for points in sim_obj.system_history[-n_frames:]:
         points = np.append(
