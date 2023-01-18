@@ -1,6 +1,7 @@
+import freud
 import numpy as np
 from numba import jit
-import freud
+
 
 def structure_factor(sim_obj, n_frames):
     box = [sim_obj.L, sim_obj.L,0]
@@ -53,11 +54,11 @@ def inverse_distance_repulsive(distances):
 def get_distance(pos1, pos2, L):
     dx = pos1[0] - pos2[0]
     dy = pos1[1] - pos2[1]
-    if dx > L / 2:
+    if dx >= L / 2:
         dx -= L
     elif dx < -L / 2:
         dx += L
-    if dy > L / 2:
+    if dy >= L / 2:
         dy -= L
     elif dy < -L / 2:
         dy += L
@@ -68,7 +69,7 @@ def get_distance(pos1, pos2, L):
 @jit(nopython=True)
 def pair_distances(pos_array, L, r_cut):
     distances = []
-    for i, pos in enumerate(pos_array):
+    for i, pos in enumerate(pos_array[:-1]):
         for pos2 in pos_array[i + 1:]:
             d = get_distance(pos2, pos, L)
             if d <= r_cut:

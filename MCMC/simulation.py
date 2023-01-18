@@ -134,8 +134,7 @@ class Simulation:
         move_idx = random.randint(0, self.system.shape[0] - 1)
         original_coords = tuple(self.system[move_idx])
         # Uniformly sample a direction and move distance
-        direction = random.uniform(0, math.pi)
-        distance = random.uniform(0, self.max_trans)
+        direction = random.uniform(0, 2 * math.pi)
         distance = random.uniform(0, self.max_trans)
         # Update the coordinates of the particle
         new_x = self.system[move_idx][0] + distance * np.cos(direction)
