@@ -21,7 +21,8 @@ class Simulation:
             energy_write_freq=100,
             trajectory_write_freq=10000,
             energy_func=None,
-            hard_sphere=True):
+            hard_sphere=True,
+            **kwargs):
         """
         :param n_density: Number density.
         :param r: Disk radius.
@@ -49,6 +50,8 @@ class Simulation:
         self.trajectory_write_freq = trajectory_write_freq
         self.energy_func = energy_func
         self.hard_sphere = hard_sphere
+        self.kwargs = kwargs
+
 
     @property
     def tps(self):
@@ -101,7 +104,7 @@ class Simulation:
             return 0
         else:
             distances = pair_distances(system, self.L, self.r_cut)
-            return self.energy_func(np.asarray(distances))
+            return self.energy_func(np.asarray(distances), **self.kwargs)
 
     def _calculate_distance(self, coord1, coord2):
         dx = coord1[0] - coord2[0]
