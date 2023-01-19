@@ -16,7 +16,7 @@ class Simulation:
             n_particles=5,
             r=0.5,
             kT=1.0,
-            r_cut=1,
+            r_cut=2.5,
             max_trans=0.5,
             energy_write_freq=100,
             trajectory_write_freq=10000,
