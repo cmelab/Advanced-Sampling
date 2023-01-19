@@ -1,4 +1,6 @@
 name: advsamp
+channels:
+  - conda-forge
 dependencies: 
   - numpy
   - matplotlib
