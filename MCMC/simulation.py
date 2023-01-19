@@ -1,3 +1,4 @@
+import gsd.hoomd
 import itertools
 import math
 import matplotlib.pyplot as plt
@@ -42,6 +43,7 @@ class Simulation:
         self.system = self._init_system()
         self.timestep = 0
         self.system_history = []
+        self.system_history_writes = 0
         self.energies = []
         self.accepted_moves = 0
         self.rejected_moves = 0
@@ -148,7 +150,7 @@ class Simulation:
     def run(self, n_steps=100):
         """Run MCMC for n number of steps."""
         start = time.time()
-        for i in range(n_steps):
+        for i in range(int(n_steps)):
             initial_energy = self.energy
             # Make move; get particle, original and new coordinates
             move_idx, original_coords, new_coords = self.trial_move()
@@ -175,10 +177,14 @@ class Simulation:
                 self.energies.append(self.energy)
             if i % self.trajectory_write_freq == 0:
                 self.system_history.append(np.copy(self.system))
+            #if len(self.system_history) == 500:
+            #    self._update_trajectory()
+            #    self.system_history.clear()
 
             self.timestep += 1
         end = time.time()
         self._tps.append(np.round(n_steps / (end - start), 3))
+        self._update_trajectory()
 
     def visualize(self, frame_number=0, save_path=None):
         """
@@ -204,4 +210,29 @@ class Simulation:
         Note: matplotlib.animation might be helpful(https://matplotlib.org/stable/api/animation_api.html)
         :param save_path: Path to save the trajectory.
         """
+        return NotImplementedError
+    
+    def save_system(self, frame=-1):
+        """
+        Save a single snapshot of system_history to a .txt file.
+        :param frame: Index number of system_history
+        """
+        system_array = self.system_history[frame]
+        np.savetxt(fname="system.txt", X=system_array)
+
+    def _update_trajectory(self):
+        with gsd.hoomd.open("trajectory.gsd", "wb") as traj:
+            for sys in self.system_history:
+                snap = gsd.hoomd.Snapshot()
+                snap.particles.N = sys.shape[0] 
+                snap.configuration.box = np.array([self.L, self.L, 0, 0, 0, 0])
+                coords = np.append(
+                        sys, np.zeros((sys.shape[0], 1)), axis=1
+                )
+                snap.particles.position = coords 
+                snap.particles.types = ["A"]
+                snap.particles.typeid = np.array([0]*snap.particles.N)
+                traj.append(snap)
+
+    def _load_system(self):
         return NotImplementedError
