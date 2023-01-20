@@ -15,9 +15,7 @@ class Simulation:
             n_density=0.5,
             n_particles=5,
             r=0.5,
-            kT=1.0,
             r_cut=2.5,
-            max_trans=0.5,
             energy_write_freq=100,
             trajectory_write_freq=10000,
             energy_func=None,
@@ -26,32 +24,30 @@ class Simulation:
         """
         :param n_density: Number density.
         :param r: Disk radius.
-        :param kT: Kinetic temperature.
         :param r_cut: Neighbor distance cut off.
-        :param max_trans: Max move size.
         :param write_freq: Save system history frequency.
         :param energy_func: Function to calculate energy.
+        :param hard_sphere: Bool; Set whether overlapping particles have infinite energy
+        :param kwargs: Pass in the kwargs for the energy function used.
         """
         self.n_density = n_density
         self.r = r
         self.n_particles = n_particles
         self.L = (math.pow(self.n_particles, 0.5)) / (math.pow(self.n_density, 0.5))
-        self.kT = kT
         self.r_cut = r_cut
-        self.max_trans = max_trans
         self.system = self._init_system()
         self.timestep = 0
-        self.system_history = []
-        self.energies = []
         self.accepted_moves = 0
         self.rejected_moves = 0
-        self._tps = []
         self.energy_write_freq = energy_write_freq
         self.trajectory_write_freq = trajectory_write_freq
         self.energy_func = energy_func
         self.hard_sphere = hard_sphere
         self.kwargs = kwargs
-
+        self.system_history = []
+        self.energies = []
+        self.temperatures = []
+        self._tps = []
 
     @property
     def tps(self):
@@ -106,13 +102,6 @@ class Simulation:
             distances = pair_distances(system, self.L, self.r_cut)
             return self.energy_func(np.asarray(distances), **self.kwargs)
 
-    def _calculate_distance(self, coord1, coord2):
-        dx = coord1[0] - coord2[0]
-        dy = coord1[1] - coord2[1]
-        dx, dy = self._periodic_boundary(dx, dy)
-        d = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
-        return d
-
     def _periodic_boundary(self, x, y):
         """
         Check periodic boundary conditions and update x and y accordingly.
@@ -128,30 +117,33 @@ class Simulation:
             y -= self.L
         elif y <= -self.L / 2:
             y += self.L
-
         return x, y
 
-    def trial_move(self):
+    def trial_move(self, max_trans):
         """"""
         # Pick a random particle; store initial value:
         move_idx = random.randint(0, self.system.shape[0] - 1)
         original_coords = tuple(self.system[move_idx])
         # Uniformly sample a direction and move distance
         direction = random.uniform(0, 2 * math.pi)
-        distance = random.uniform(0, self.max_trans)
+        distance = random.uniform(0, max_trans)
         # Update the coordinates of the particle
         new_x = self.system[move_idx][0] + distance * np.cos(direction)
         new_y = self.system[move_idx][1] + distance * np.sin(direction)
         new_x, new_y = self._periodic_boundary(new_x, new_y)
         return move_idx, original_coords, (new_x, new_y)
 
-    def run(self, n_steps=100):
-        """Run MCMC for n number of steps."""
+    def run(self, n_steps, kT, max_trans=0.5):
+        """Run MCMC for n number of steps.
+        :param n_steps: Number of steps to run
+        :param kT: Reduced temperature of the system 
+        :param max_trans: The largest allowed translation distance 
+        """
         start = time.time()
         for i in range(n_steps):
             initial_energy = self.energy
             # Make move; get particle, original and new coordinates
-            move_idx, original_coords, new_coords = self.trial_move()
+            move_idx, original_coords, new_coords = self.trial_move(max_trans)
             self.system[move_idx] = new_coords
             overlap = check_overlap(self.system, move_idx, self.L, self.r)
             trial_energy = self.calculate_energy(self.system, overlap)
@@ -161,7 +153,7 @@ class Simulation:
                     self.accepted_moves += 1
                 else:
                     rand_num = random.uniform(0, 1)
-                    if np.exp(-delta_U / self.kT) <= rand_num:
+                    if np.exp(-delta_U / kT) <= rand_num:
                         # Move accepted; keep updated self.system
                         self.accepted_moves += 1
                     else:  # Move rejected; change self.system to prev state
@@ -173,6 +165,7 @@ class Simulation:
 
             if i % self.energy_write_freq == 0:
                 self.energies.append(self.energy)
+                self.temperatures.append(kT)
             if i % self.trajectory_write_freq == 0:
                 self.system_history.append(np.copy(self.system))
 
@@ -180,7 +173,7 @@ class Simulation:
         end = time.time()
         self._tps.append(np.round(n_steps / (end - start), 3))
 
-    def visualize(self, frame_number=0, save_path=None):
+    def visualize(self, frame_number=-1, save_path=None):
         """
         Plot the current grid using matplotlib.
         :param save_path: Path to save figure
@@ -197,11 +190,3 @@ class Simulation:
             fig_name = "system_frame_" + str(frame_number)
             plt.savefig(os.path.join(save_path, fig_name))
         return plt
-
-    def trajectory(self, save_path=""):
-        """
-        Find a way to play the trajectory from the system history.
-        Note: matplotlib.animation might be helpful(https://matplotlib.org/stable/api/animation_api.html)
-        :param save_path: Path to save the trajectory.
-        """
-        return NotImplementedError
