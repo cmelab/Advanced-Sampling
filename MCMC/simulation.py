@@ -83,7 +83,7 @@ class Simulation:
                 row_init_x = init_x_even
             else:
                 row_init_x = init_x_odd
-            while row_disk_counter < disks_per_row and len(system) <= self.n_particles:
+            while row_disk_counter < disks_per_row and len(system) < self.n_particles:
                 system.append([row_init_x + (row_disk_counter * 2 * self.r), init_y])
                 row_disk_counter += 1
             init_y += 2 * self.r
