@@ -50,6 +50,18 @@ def inverse_distance_repulsive(distances):
     return (1. / np.power(distances, 2)).sum()
 
 
+def lj_energy(distances, epsilon=1.0, sigma=1.0, n=12, m=6):
+    """
+    Calculates Lennard-Jones pair potential.
+    :param distances: 1D array of distances.
+    :param epsilon: Energy parameter epsilon.
+    :param sigma: Particle size sigma.
+    :param n: Repulsive power factor.
+    :param m: Attractive power factor.
+    :return: Total energy.
+    """
+    return 4 * epsilon * (np.power(sigma / distances, n) - np.power(sigma / distances, m)).sum()
+
 @jit(nopython=True)
 def get_distance(pos1, pos2, L):
     dx = pos1[0] - pos2[0]

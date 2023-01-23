@@ -1,7 +1,9 @@
 name: advsamp
+channels:
+  - conda-forge
 dependencies: 
   - numpy
   - matplotlib
   - jupyter
   - freud
-  - numba
+  - numba=0.56.4
