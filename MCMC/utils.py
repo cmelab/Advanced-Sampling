@@ -2,6 +2,15 @@ import freud
 import numpy as np
 from numba import jit
 
+def nearest_neighbors(sim_obj, n_frames):
+    box = [sim_obj.L, sim_obj.L,0]
+    for points in sim_obj.system_history[-n_frames:]:
+        points = np.append(
+            points, np.zeros((points.shape[0], 1)),axis=1
+        )
+    aq = freud.locality.AABBQuery(box, points)
+    nlist = aq.query(points, {'r_max': 3}).toNeighborList()
+    return nlist
 
 def structure_factor(sim_obj, n_frames, num_k_values=100, k_max=10):
     box = [sim_obj.L, sim_obj.L,0]
