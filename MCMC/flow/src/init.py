@@ -15,7 +15,7 @@ import signac
 import logging
 from collections import OrderedDict
 from itertools import product
-from ../MCMC.utils import lj_energy
+from MCMC.utils import lj_energy
 
 
 def get_parameters():
@@ -29,7 +29,11 @@ def get_parameters():
     parameters["energy_write_freq"] = [100]
     parameters["trajectory_write_freq"] = [10000]
     parameters["energy_function"] = [lj_energy]
+    parameters["epsilon" = []
     parameters["hard_sphere"] = [False]
+    parameters["temperatures"] = []
+    parameters["n_steps"] = []
+    parameters["max_trans"] = []
     return list(parameters.keys()), list(product(*parameters.values()))
 
 

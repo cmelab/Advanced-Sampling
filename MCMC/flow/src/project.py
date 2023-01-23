@@ -63,7 +63,7 @@ def sampled(job):
 @MyProject.operation
 @MyProject.post(sampled)
 def sample(job):
-    from ../MCMC.simulation import Simulation
+    from MCMC.simulation import Simulation
 
     with job:
         print("JOB ID NUMBER:")
@@ -74,13 +74,21 @@ def sample(job):
                 n_density=job.sp.density,
                 n_particles=job.sp.n_particles,
                 r=job.sp.radius,
-                kT=job.sp.kT,
-                max_trans=job.sp.max_trans,
                 energy_write_freq=job.sp.energy_write_freq,
                 trajectory_write_freq=job.sp.trajectory_write_freq,
                 energy_func=job.sp.energy_func,
-                hard_sphere=job.sp.hard_sphere
+                hard_sphere=job.sp.hard_sphere,
+                epsilon=job.sp.epsilon
         )
+
+        for kT, n_steps, max_trans in zip(
+                [
+                    job.sp.temperatures,
+                    job.sp.n_steps,
+                    job.sp.max_trans
+                ]
+        ):
+            sim.run(n_steps=n_steps, kT=kT, max_trans=max_trans)
 
 
 if __name__ == "__main__":
