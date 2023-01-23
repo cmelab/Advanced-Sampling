@@ -45,6 +45,7 @@ class Simulation:
         self.system_history = []
         self.system_history_writes = 0
         self.energies = []
+        self.temperatures = []
         self.accepted_moves = 0
         self.rejected_moves = 0
         self._tps = []
@@ -177,14 +178,21 @@ class Simulation:
                 self.energies.append(self.energy)
             if i % self.trajectory_write_freq == 0:
                 self.system_history.append(np.copy(self.system))
-            #if len(self.system_history) == 500:
-            #    self._update_trajectory()
-            #    self.system_history.clear()
+
+            if len(self.energies) == 5000:
+                self._update_log_file()
+                self.energies.clear()
+                self.temperatures.clear()
+            if len(self.system_history) == 500:
+                self._update_trajectory()
+                self.system_history.clear()
+
 
             self.timestep += 1
         end = time.time()
         self._tps.append(np.round(n_steps / (end - start), 3))
         self._update_trajectory()
+        self._update_log_file()
 
     def visualize(self, frame_number=0, save_path=None):
         """
@@ -224,15 +232,24 @@ class Simulation:
         with gsd.hoomd.open("trajectory.gsd", "wb") as traj:
             for sys in self.system_history:
                 snap = gsd.hoomd.Snapshot()
-                snap.particles.N = sys.shape[0] 
-                snap.configuration.box = np.array([self.L, self.L, 0, 0, 0, 0])
+                snap.particles.N = self.n_particles 
+                snap.configuration.box = np.array([self.L, self.L, self.L, 0, 0, 0])
+                snap.particles.types = ["A"]
                 coords = np.append(
                         sys, np.zeros((sys.shape[0], 1)), axis=1
                 )
                 snap.particles.position = coords 
-                snap.particles.types = ["A"]
-                snap.particles.typeid = np.array([0]*snap.particles.N)
                 traj.append(snap)
+
+    def _update_log_file(self):
+        if not os.path.isfile("log.txt"):
+            with open("log.txt", "w") as file:
+                for e, t in zip(self.energies, self.temperatures):
+                    file.write(f"{e},{t}"+"\n")
+        else:
+            with open("log.txt", "a") as file:
+                for e, t in zip(self.energies, self.temperatures):
+                    file.write(f"{e},{t}"+"\n")
 
     def _load_system(self):
         return NotImplementedError
