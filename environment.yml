@@ -3,8 +3,8 @@ channels:
   - conda-forge
 dependencies: 
   - numpy
-  - gsd
   - matplotlib
   - jupyter
   - freud
   - numba=0.56.4
+  - gsd
