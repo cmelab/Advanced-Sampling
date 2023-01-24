@@ -21,6 +21,7 @@ class Simulation:
             trajectory_write_freq=10000,
             energy_func=None,
             hard_sphere=True,
+            restart=False,
             **kwargs):
         """
         :param n_density: Number density.
@@ -36,7 +37,7 @@ class Simulation:
         self.n_particles = n_particles
         self.L = (math.pow(self.n_particles, 0.5)) / (math.pow(self.n_density, 0.5))
         self.r_cut = r_cut
-        self.system = self._init_system()
+        self.system = self._init_system(restart)
         self.timestep = 0
         self.accepted_moves = 0
         self.rejected_moves = 0
@@ -45,8 +46,8 @@ class Simulation:
         self.energy_func = energy_func
         self.hard_sphere = hard_sphere
         self.kwargs = kwargs
-        self.system_history = []
-        self.energies = []
+        self.system_history = [self.system]
+        self.energies = [self.energy]
         self.temperatures = []
         self._tps = []
 
@@ -62,29 +63,32 @@ class Simulation:
     def energy(self):
         return self.calculate_energy(self.system)
 
-    def _init_system(self):
+    def _init_system(self, restart):
         """
         Initialize an array of 2D positions, randomly putting disk in the box.
         x and y coordinates are between -L/2 and L/2.
         :return: A 2D numpy array of shape (self.n_particles, 2).
         """
-        disks_per_row = math.floor((self.L - self.r) / (2 * self.r))
-        n_rows = math.ceil(self.n_particles / disks_per_row)
-        init_x_even = (-self.L / 2) + self.r
-        init_x_odd = (-self.L / 2) + (2 * self.r)
-        init_y = (-self.L / 2) + self.r
-        system = []
-        for i in np.arange(n_rows):
-            row_disk_counter = 0
-            if i % 2 == 0:
-                row_init_x = init_x_even
-            else:
-                row_init_x = init_x_odd
-            while row_disk_counter < disks_per_row and len(system) < self.n_particles:
-                system.append([row_init_x + (row_disk_counter * 2 * self.r), init_y])
-                row_disk_counter += 1
-            init_y += 2 * self.r
-        system = np.asarray(system)
+        if restart and os.path.isfile("system.txt"):
+            system = self._load_system()
+        else:
+            disks_per_row = math.floor((self.L - self.r) / (2 * self.r))
+            n_rows = math.ceil(self.n_particles / disks_per_row)
+            init_x_even = (-self.L / 2) + self.r
+            init_x_odd = (-self.L / 2) + (2 * self.r)
+            init_y = (-self.L / 2) + self.r
+            system = []
+            for i in np.arange(n_rows):
+                row_disk_counter = 0
+                if i % 2 == 0:
+                    row_init_x = init_x_even
+                else:
+                    row_init_x = init_x_odd
+                while row_disk_counter < disks_per_row and len(system) < self.n_particles:
+                    system.append([row_init_x + (row_disk_counter * 2 * self.r), init_y])
+                    row_disk_counter += 1
+                init_y += 2 * self.r
+            system = np.asarray(system)
         return system
 
     def calculate_energy(self, system, overlap=False):
@@ -140,6 +144,7 @@ class Simulation:
         :param kT: Reduced temperature of the system 
         :param max_trans: The largest allowed translation distance 
         """
+        self.save_system()
         start = time.time()
         for i in range(int(n_steps)):
             initial_energy = self.energy
@@ -196,7 +201,7 @@ class Simulation:
             fig_name = "system_frame_" + str(frame_number)
             plt.savefig(os.path.join(save_path, fig_name))
         return plt
-    
+
     def save_system(self, frame=-1):
         """
         Save a single snapshot of system_history to a .txt file.
@@ -224,11 +229,17 @@ class Simulation:
             if not os.path.isfile("log.txt"):
                 with open("log.txt", "w") as file:
                     for e, t in zip(self.energies, self.temperatures):
-                        file.write(f"{e},{t}"+"\n")
+                        file.write(f"{e},{t}" + "\n")
             else:
                 with open("log.txt", "a") as file:
                     for e, t in zip(self.energies, self.temperatures):
-                        file.write(f"{e},{t}"+"\n")
+                        file.write(f"{e},{t}" + "\n")
 
     def _load_system(self):
-        return NotImplementedError
+        system = np.loadtxt(fname="system.txt")
+        try:
+            assert system.shape[0] == self.n_particles
+        except AssertionError:
+            raise AssertionError(
+                "Number of particles in the saved system is not equal to the specified number of particles!")
+        return system
