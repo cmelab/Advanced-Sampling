@@ -205,9 +205,9 @@ class Simulation:
         system_array = self.system_history[frame]
         np.savetxt(fname="system.txt", X=system_array)
 
-    def save_trajectory(self, fname="traj.gsd", start_frame=0, last_frame=-1):
+    def save_trajectory(self, fname="traj.gsd"):
         with gsd.hoomd.open(fname, 'wb') as traj:
-            for sys in self.system_history[start_frame:last_frame]:
+            for sys in self.system_history:
                 snap = gsd.hoomd.Snapshot()
                 snap.particles.N = self.n_particles
                 snap.configuration.box = [self.L, self.L, self.L, 0, 0, 0]
