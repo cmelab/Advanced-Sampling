@@ -173,19 +173,11 @@ class Simulation:
                     self.temperatures.clear()
             if i % self.trajectory_write_freq == 0:
                 self.system_history.append(np.copy(self.system))
-                if len(self.system_history) == 500:
-                    self._update_trajectory()
-                    #self.system_history.clear()
 
             self.timestep += 1
         end = time.time()
         self._tps.append(np.round(n_steps / (end - start), 3))
-        #self._update_trajectory()
-        #self.system_history.clear()
-        #self._update_log_file()
-        #self.energies.clear()
-        #self.temperatures.clear()
-
+        self._update_log_file()
 
     def visualize(self, frame_number=-1, save_path=None):
         """
@@ -213,36 +205,19 @@ class Simulation:
         system_array = self.system_history[frame]
         np.savetxt(fname="system.txt", X=system_array)
 
-    def _update_trajectory(self):
-        if len(self.system_history) != 0:
-            if not os.path.isfile("trajectory.gsd"):
-                with gsd.hoomd.open("trajectory.gsd", "wb") as traj:
-                    for sys in self.system_history:
-                        snap = gsd.hoomd.Snapshot()
-                        snap.particles.N = self.n_particles 
-                        snap.configuration.box = np.array([self.L, self.L, self.L, 0, 0, 0])
-                        snap.particles.types = ["A"]
-                        coords = np.append(
-                                sys, np.zeros((sys.shape[0], 1)), axis=1
-                        )
-                        snap.particles.position = coords 
-                        traj.append(snap)
-            else:
-                last_traj = gsd.hoomd.open("trajectory.gsd", "rb")
-                snapshots = [i for i in last_traj]
-                with gsd.hoomd.open("trajectory.gsd", "wb") as traj:
-                    for sys in self.system_history:
-                        snap = gsd.hoomd.Snapshot()
-                        snap.particles.N = self.n_particles 
-                        snap.configuration.box = np.array([self.L, self.L, self.L, 0, 0, 0])
-                        snap.particles.types = ["A"]
-                        coords = np.append(
-                                sys, np.zeros((sys.shape[0], 1)), axis=1
-                        )
-                        snap.particles.position = coords 
-                        snapshots.append(snap)
-                    traj.extend(snapshots)
-                last_traj.close()
+    def save_trajectory(self, fname="traj.gsd", start_frame=0, last_frame=-1):
+        with gsd.hoomd.open(fname, 'wb') as traj:
+            for sys in self.system_history[start_frame:last_frame]:
+                snap = gsd.hoomd.Snapshot()
+                snap.particles.N = self.n_particles
+                snap.configuration.box = [self.L, self.L, self.L, 0, 0, 0]
+                snap.particles.type = ['A']
+                snap.particles.position = np.append(sys, np.zeros((sys.shape[0], 1)), axis=1)
+                traj.append(snap)
+
+    def clear_history(self):
+        """Clear the system history"""
+        self.system_history.clear()
 
     def _update_log_file(self):
         if len(self.energies) != 0:
