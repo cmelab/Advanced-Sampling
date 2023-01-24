@@ -57,6 +57,8 @@ class Simulation:
 
     @property
     def acceptance_ratio(self):
+        if self.timestep == 0:
+            return 0.
         return self.accepted_moves / self.timestep
 
     @property
@@ -144,7 +146,6 @@ class Simulation:
         :param kT: Reduced temperature of the system 
         :param max_trans: The largest allowed translation distance 
         """
-        self.save_system()
         start = time.time()
         for i in range(int(n_steps)):
             initial_energy = self.energy

@@ -96,12 +96,12 @@ def sample(job):
         print("Creating the system...")
         print("----------------------")
 
-        # Set up the system
+        # Setting up the system
+        restart = job.isfile("system.txt")
         sim = Simulation(n_particles=job.sp.n_particles, n_density=job.sp.n_density, r=job.sp.r, r_cut=job.sp.r_cut,
                          energy_write_freq=job.sp.energy_write_freq, trajectory_write_freq=job.sp.trajectory_write_freq,
-                         energy_func=ENERGY_FUNCS[job.sp.energy_func], hard_sphere=job.sp.hard_sphere,
+                         energy_func=ENERGY_FUNCS[job.sp.energy_func], hard_sphere=job.sp.hard_sphere, restart=restart,
                          sigma=job.sp.sigma, epsilon=job.sp.epsilon, n=job.sp.n, m=job.sp.m)
-
         job.doc["L"] = sim.L
 
         print("----------------------")
@@ -124,7 +124,8 @@ def sample(job):
         job.doc["tps"] = sim.tps
         job.doc["energy"] = sim.energy
 
-        job.doc["done"] = True
+        if sim.timestep == sum(job.sp.n_steps):
+            job.doc["done"] = True
 
         print("-----------------------------")
         print("Simulation finished completed")
