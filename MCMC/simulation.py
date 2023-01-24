@@ -7,7 +7,7 @@ import os
 import random
 import time
 
-from MCMC.utils import pair_distances, check_overlap
+from utils import pair_distances, check_overlap
 
 
 class Simulation:
