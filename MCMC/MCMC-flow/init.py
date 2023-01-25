@@ -34,11 +34,11 @@ def get_parameters():
     parameters["m"] = [6]
 
     # logging parameters
-    parameters["energy_write_freq"] = [100]
+    parameters["energy_write_freq"] = [1000]
     parameters["trajectory_write_freq"] = [1000]
 
     # run parameters
-    parameters["n_steps"] = [[1e5, 1e5, 1e5]]
+    parameters["n_steps"] = [[1e4, 1e4, 1e4]]
     parameters["kT"] = [[10, 1.5, 1.5]]
     parameters["max_trans"] = [0.5]
 
@@ -57,7 +57,15 @@ def main():
         parent_job = project.open_job(parent_statepoint)
         parent_job.init()
         parent_job.doc.setdefault("done", False)
-
+        # each pair of (`n_steps`, `kT`) defines a phase of simulation run. The `phase_{i}` key in job doc determines
+        # whether that phase is already done or not. False means phase is not done.
+        if len(parent_statepoint['n_steps']) == len(parent_statepoint['kT']):
+            for i in range(1, len(parent_statepoint['n_steps']) + 1):
+                parent_job.doc.setdefault("phase_{}".format(i), False)
+        else:
+            raise ValueError(
+                "Length of `n_steps` list must be same as `kT` for each job! \n `n_step` size: {}, `kT` size: {}".format(
+                    len(parent_statepoint['n_steps']), len(parent_statepoint['kT'])))
     if custom_job_doc:
         for key in custom_job_doc:
             parent_job.doc.setdefault(key, custom_job_doc[key])
