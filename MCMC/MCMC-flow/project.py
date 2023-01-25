@@ -111,34 +111,23 @@ def sample(job):
         print("Starting simulation...")
         print("----------------------")
         # Running the simulation
-        # After running each phase (separated by n_steps and kT), the corresponding key `phase_{i}` becomes True.
-        # In case of any unexpected interruptions during any phase, the job will resume the simulation from
-        # the previous saved phase.
         for i, (n_steps, kT) in enumerate(zip(job.sp.n_steps, job.sp.kT)):
             current_run = i+1
-            print(current_run)
-            print(job.doc["phase_{}".format(current_run)])
             if not job.doc["phase_{}".format(current_run)]:
                 sim.run(n_steps=n_steps, kT=kT, max_trans=job.sp.max_trans)
                 sim.save_trajectory(fname="trajectory_{}.gsd".format(i))
                 sim.save_system()
-                sim.clear_history()
-                job.doc["timestep"] = sim.timestep
-                job.doc["accepted_moves"] = sim.accepted_moves
-                job.doc["rejected_moves"] = sim.rejected_moves
-                job.doc["acceptance_ratio"] = sim.acceptance_ratio
-                job.doc["tps"] = sim.tps
-                job.doc["energy"] = sim.energy
+                job.doc["timestep"].append(sim.timestep)
+                job.doc["accepted_moves"].append(sim.accepted_moves)
+                job.doc["rejected_moves"].append(sim.rejected_moves)
+                job.doc["acceptance_ratio"].append(sim.acceptance_ratio)
+                job.doc["tps"].append(sim.tps)
+                job.doc["energy"].append(sim.energy)
                 job.doc["phase_{}".format(current_run)] = True
-            else:
-                sim.timestep = job.doc["timestep"]
-                sim.accepted_moves = job.doc["accepted_moves"]
-                sim.rejected_moves = job.doc["rejected_moves"]
-                print(sim.timestep)
+                sim.reset_system()
 
-        if sim.timestep == sum(job.sp.n_steps):
+        if sum(job.doc["timestep"]) == sum(job.sp.n_steps):
             job.doc["done"] = True
-
         print("-----------------------------")
         print("Simulation finished completed")
         print("-----------------------------")

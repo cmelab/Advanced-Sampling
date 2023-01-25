@@ -66,6 +66,12 @@ def main():
             raise ValueError(
                 "Length of `n_steps` list must be same as `kT` for each job! \n `n_step` size: {}, `kT` size: {}".format(
                     len(parent_statepoint['n_steps']), len(parent_statepoint['kT'])))
+        parent_job.doc["timestep"] = []
+        parent_job.doc["accepted_moves"] = []
+        parent_job.doc["rejected_moves"] = []
+        parent_job.doc["acceptance_ratio"] = []
+        parent_job.doc["tps"] = []
+        parent_job.doc["energy"] = []
     if custom_job_doc:
         for key in custom_job_doc:
             parent_job.doc.setdefault(key, custom_job_doc[key])

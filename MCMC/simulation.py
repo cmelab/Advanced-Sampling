@@ -221,9 +221,12 @@ class Simulation:
                 snap.particles.position = np.append(sys, np.zeros((sys.shape[0], 1)), axis=1)
                 traj.append(snap)
 
-    def clear_history(self):
-        """Clear the system history"""
+    def reset_system(self):
+        """Clear the system history and reset the system."""
         self.system_history.clear()
+        self.timestep = 0
+        self.accepted_moves = 0
+        self.rejected_moves = 0
 
     def _update_log_file(self):
         if len(self.energies) != 0:
