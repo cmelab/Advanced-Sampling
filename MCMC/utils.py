@@ -2,6 +2,33 @@ import freud
 import numpy as np
 from numba import jit
 
+def avg_nn(sim_obj, n_frames, r_max=3):
+    box = [sim_obj.L, sim_obj.L,0]
+    frame_avg_nn = []
+    for points in sim_obj.system_history[-n_frames:]:
+        points = np.append(
+            points, np.zeros((points.shape[0], 1)),axis=1
+        )
+        aq = freud.locality.AABBQuery(box, points)
+        nlist = aq.query(points, {'r_max': 3}).toNeighborList()
+        neighbors = []
+        for i in range(sim_obj.n_particles):
+            neighbors.append(np.where(nlist[:, 0] == i)[0].shape[0]-1)
+            frame_avg_nn.append(np.average(neighbors))
+    return np.average(frame_avg_nn)
+
+def structure_factor(sim_obj, n_frames, num_k_values=100, k_max=10):
+    box = [sim_obj.L, sim_obj.L,0]
+    sf = freud.diffraction.StaticStructureFactorDebye(
+            num_k_values=num_k_values, k_max=k_max
+            )
+    for points in sim_obj.system_history[-n_frames:]:
+        points = np.append(
+            points, np.zeros((points.shape[0], 1)),axis=1
+        )
+        sf.compute((box, points))
+    return sf
+
 
 def rdf(sim_obj, n_frames, n_bins=50, r_max=None):
     if not r_max:
