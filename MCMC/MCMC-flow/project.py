@@ -53,7 +53,7 @@ class R2(DefaultSlurmEnvironment):
     def add_args(cls, parser):
         parser.add_argument(
             "--partition",
-            default="shortgpuq",
+            default="shortq",
             help="Specify the partition to submit to."
         )
 
