@@ -110,10 +110,10 @@ def sample(job):
         print("Starting simulation...")
         print("----------------------")
         # Running the simulation
-        for i, (n_steps, kT) in enumerate(zip(job.sp.n_steps, job.sp.kT)):
+        for i, (n_steps, kT, max_trans) in enumerate(zip(job.sp.n_steps, job.sp.kT, job.sp.max_trans)):
             current_run = i+1
             if not job.doc["phase_{}".format(current_run)]:
-                sim.run(n_steps=n_steps, kT=kT, max_trans=job.sp.max_trans)
+                sim.run(n_steps=n_steps, kT=kT, max_trans=max_trans)
                 sim.save_trajectory(fname="trajectory_{}.gsd".format(i))
                 sim.save_system()
                 job.doc["timestep"].append(sim.timestep)

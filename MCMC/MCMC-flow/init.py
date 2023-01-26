@@ -35,12 +35,12 @@ def get_parameters():
 
     # logging parameters
     parameters["energy_write_freq"] = [1000]
-    parameters["trajectory_write_freq"] = [1000]
+    parameters["trajectory_write_freq"] = [10000]
 
     # run parameters
-    parameters["n_steps"] = [[1e4, 1e4, 1e4]]
-    parameters["kT"] = [[10, 1.5, 1.5]]
-    parameters["max_trans"] = [0.5]
+    parameters["n_steps"] = [[1e7, 1e8]]
+    parameters["kT"] = [[10, 1.5]]
+    parameters["max_trans"] = [[3.0, 0.5]]
 
     return list(parameters.keys()), list(product(*parameters.values()))
 
@@ -59,13 +59,16 @@ def main():
         parent_job.doc.setdefault("done", False)
         # each pair of (`n_steps`, `kT`) defines a phase of simulation run. The `phase_{i}` key in job doc determines
         # whether that phase is already done or not. False means phase is not done.
-        if len(parent_statepoint['n_steps']) == len(parent_statepoint['kT']):
-            for i in range(1, len(parent_statepoint['n_steps']) + 1):
+        n_steps_size = len(parent_statepoint['n_steps'])
+        kT_size = len(parent_statepoint['kT'])
+        max_trans_size = len(parent_statepoint['max_trans'])
+        if n_steps_size == kT_size == max_trans_size:
+            for i in range(1, n_steps_size + 1):
                 parent_job.doc.setdefault("phase_{}".format(i), False)
         else:
             raise ValueError(
-                "Length of `n_steps` list must be same as `kT` for each job! \n `n_step` size: {}, `kT` size: {}".format(
-                    len(parent_statepoint['n_steps']), len(parent_statepoint['kT'])))
+                "These lists must have the same length: `n_steps`, `kT` and `max_trans` for each job! \n "
+                "`n_step` size: {}, `kT` size: {}, `max_trans` size: {}".format(n_steps_size, kT_size, max_trans_size))
         parent_job.doc["timestep"] = []
         parent_job.doc["accepted_moves"] = []
         parent_job.doc["rejected_moves"] = []
