@@ -83,7 +83,6 @@ def initialized(job):
 
 
 @directives(executable="python -u")
-@directives(ngpu=1)
 @MyProject.operation
 @MyProject.post(sampled)
 def sample(job):
