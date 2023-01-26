@@ -46,8 +46,8 @@ class Simulation:
         self.energy_func = energy_func
         self.hard_sphere = hard_sphere
         self.kwargs = kwargs
-        self.system_history = [self.system]
-        self.energies = [self.energy]
+        self.system_history = [np.copy(self.system)]
+        self.energies = [np.copy(self.energy)]
         self.temperatures = []
         self._tps = []
 
