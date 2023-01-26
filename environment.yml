@@ -7,3 +7,6 @@ dependencies:
   - jupyter
   - freud
   - numba=0.56.4
+  - gsd
+  - signac=1.7.0
+  - signac-flow=0.18.1
