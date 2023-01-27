@@ -25,7 +25,7 @@ def get_parameters():
     parameters["r"] = [0.5]
     parameters["r_cut"] = [2.5]
     parameters["energy_func"] = ["lj"]
-    parameters["hard_sphere"] = [True]
+    parameters["hard_sphere"] = [False]
 
     # LJ energy parameters
     parameters["epsilon"] = [1.0]

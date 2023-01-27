@@ -152,7 +152,10 @@ class Simulation:
             # Make move; get particle, original and new coordinates
             move_idx, original_coords, new_coords = self.trial_move(max_trans)
             self.system[move_idx] = new_coords
-            overlap = check_overlap(self.system, move_idx, self.L, self.r)
+            if self.hard_sphere:
+                overlap = check_overlap(self.system, move_idx, self.L, self.r)
+            else:
+                overlap = False
             trial_energy = self.calculate_energy(self.system, overlap)
             if np.isfinite(trial_energy):
                 delta_U = trial_energy - initial_energy
