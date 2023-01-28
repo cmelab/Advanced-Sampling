@@ -3,17 +3,16 @@ import numpy as np
 import gsd.hoomd
 from numba import jit
 
-def avg_nn(sim_obj, n_frames, r_max=3):
-    box = [sim_obj.L, sim_obj.L,0]
-    frame_avg_nn = []
-    for points in sim_obj.system_history[-n_frames:]:
-        points = np.append(
-            points, np.zeros((points.shape[0], 1)),axis=1
-        )
+def avg_nn(gsd_file, frame=-1, r_max=3):
+    with gsd.hoomd.open(gsd_file) as f:
+        snap = f[frame]
+        box = snap.configuration.box
+        points = snap.particles.position
+        frame_avg_nn = []
         aq = freud.locality.AABBQuery(box, points)
         nlist = aq.query(points, {'r_max': 3}).toNeighborList()
         neighbors = []
-        for i in range(sim_obj.n_particles):
+        for i in range(snap.particles.N):
             neighbors.append(np.where(nlist[:, 0] == i)[0].shape[0]-1)
             frame_avg_nn.append(np.average(neighbors))
     return np.average(frame_avg_nn)
