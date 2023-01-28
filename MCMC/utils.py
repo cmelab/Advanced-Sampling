@@ -29,16 +29,16 @@ def structure_factor(gsd_file, frame=-1, num_k_values=100, k_max=10):
     return s
 
 
-def rdf(sim_obj, n_frames, n_bins=50, r_max=None):
-    if not r_max:
-        r_max = (sim_obj.L/2)-sim_obj.r
-    box = [sim_obj.L, sim_obj. L,0]
-    rdf = freud.density.RDF(n_bins, r_max)
-    for points in sim_obj.system_history[-n_frames:]:
-        points = np.append(
-            points, np.zeros((points.shape[0], 1)),axis=1
-        )
-
+def rdf(gsd_file, frame=-1, bins=50, r_max=None):
+    with gsd.hoomd.open(gsd_file) as f:
+        snap = f[frame]
+        box = snap.configuration.box
+        points = snap.particles.position
+        if not r_max:
+            r_max = np.nextafter(
+                    np.max(snap.configuration.box[:3]) * 0.3, 0, dtype=np.float32
+                    )
+        rdf = freud.density.RDF(bins, r_max)
         rdf.compute((box,points))
     return rdf
 
