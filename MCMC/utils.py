@@ -1,5 +1,6 @@
 import freud
 import numpy as np
+import gsd.hoomd
 from numba import jit
 
 def avg_nn(sim_obj, n_frames, r_max=3):
@@ -17,17 +18,16 @@ def avg_nn(sim_obj, n_frames, r_max=3):
             frame_avg_nn.append(np.average(neighbors))
     return np.average(frame_avg_nn)
 
-def structure_factor(sim_obj, n_frames, num_k_values=100, k_max=10):
-    box = [sim_obj.L, sim_obj.L,0]
-    sf = freud.diffraction.StaticStructureFactorDebye(
+def structure_factor(gsd_file, frame=-1, num_k_values=100, k_max=10):
+    with gsd.hoomd.open(gsd_file) as f:
+        snap = f[frame]
+        box = snap.configuration.box
+        points = snap.particles.position
+        sf = freud.diffraction.StaticStructureFactorDebye(
             num_k_values=num_k_values, k_max=k_max
             )
-    for points in sim_obj.system_history[-n_frames:]:
-        points = np.append(
-            points, np.zeros((points.shape[0], 1)),axis=1
-        )
-        sf.compute((box, points))
-    return sf
+        s = sf.compute((box, points))
+    return s
 
 
 def rdf(sim_obj, n_frames, n_bins=50, r_max=None):
