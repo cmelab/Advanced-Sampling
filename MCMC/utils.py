@@ -17,16 +17,17 @@ def avg_nn(gsd_file, frame=-1, r_max=3):
             frame_avg_nn.append(np.average(neighbors))
     return np.average(frame_avg_nn)
 
-def structure_factor(gsd_file, frame=-1, num_k_values=100, k_max=10):
+def structure_factor(gsd_file, start=0, stop=-1, num_k_values=100, k_max=10):
     with gsd.hoomd.open(gsd_file) as f:
-        snap = f[frame]
-        box = snap.configuration.box
-        points = snap.particles.position
+        snap = f[0]
         sf = freud.diffraction.StaticStructureFactorDebye(
-            num_k_values=num_k_values, k_max=k_max
-            )
-        s = sf.compute((box, points))
-    return s
+                num_k_values=num_k_values, k_max=k_max
+                )
+        for snap in f[start:stop]:
+            box = snap.configuration.box
+            points = snap.particles.position
+        sf.compute((box, points))
+    return sf
 
 
 def rdf(gsd_file, frame=-1, bins=50, r_max=None):
