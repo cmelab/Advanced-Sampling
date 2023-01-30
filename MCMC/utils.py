@@ -19,7 +19,6 @@ def avg_nn(gsd_file, frame=-1, r_max=3):
 
 def structure_factor(gsd_file, start=0, stop=-1, num_k_values=100, k_max=10):
     with gsd.hoomd.open(gsd_file, "rb") as f:
-        snap = f[0]
         sf = freud.diffraction.StaticStructureFactorDebye(
                 num_k_values=num_k_values, k_max=k_max
                 )
@@ -32,7 +31,6 @@ def structure_factor(gsd_file, start=0, stop=-1, num_k_values=100, k_max=10):
 
 def rdf(gsd_file, start=0, stop=-1, bins=50, r_max=2):
     with gsd.hoomd.open(gsd_file, "rb") as f:
-        snap = f[0]
         rdf = freud.density.RDF(bins, r_max)
         for snap in f[start:stop]:
             box = snap.configuration.box
