@@ -164,7 +164,7 @@ class Simulation:
                     self.accepted_moves += 1
                 else:
                     rand_num = random.uniform(0, 1)
-                    if np.exp(-delta_U / kT) <= rand_num:
+                    if np.exp(-delta_U / kT) >= rand_num:
                         # Move accepted; keep updated self.system
                         self.accepted_moves += 1
                     else:  # Move rejected; change self.system to prev state
