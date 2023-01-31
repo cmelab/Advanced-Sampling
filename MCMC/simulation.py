@@ -1,11 +1,12 @@
-import gsd.hoomd
-import itertools
+import copy
 import math
-import matplotlib.pyplot as plt
-import numpy as np
 import os
 import random
 import time
+
+import gsd.hoomd
+import matplotlib.pyplot as plt
+import numpy as np
 
 from utils import pair_distances, check_overlap
 
@@ -47,7 +48,7 @@ class Simulation:
         self.hard_sphere = hard_sphere
         self.kwargs = kwargs
         self.system_history = [np.copy(self.system)]
-        self.energies = [np.copy(self.energy)]
+        self.energies = [copy.deepcopy(self.energy)]
         self.temperatures = []
         self._tps = []
 
@@ -174,6 +175,7 @@ class Simulation:
                 self.rejected_moves += 1
 
             if i % self.energy_write_freq == 0:
+                print(len(self.energies))
                 self.energies.append(self.energy)
                 self.temperatures.append(kT)
                 if len(self.energies) == 5000:
