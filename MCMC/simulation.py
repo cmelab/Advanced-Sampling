@@ -1,11 +1,12 @@
-import gsd.hoomd
-import itertools
+import copy
 import math
-import matplotlib.pyplot as plt
-import numpy as np
 import os
 import random
 import time
+
+import gsd.hoomd
+import matplotlib.pyplot as plt
+import numpy as np
 
 from utils import pair_distances, check_overlap
 
@@ -47,7 +48,7 @@ class Simulation:
         self.hard_sphere = hard_sphere
         self.kwargs = kwargs
         self.system_history = [np.copy(self.system)]
-        self.energies = [np.copy(self.energy)]
+        self.energies = [copy.deepcopy(self.energy)]
         self.temperatures = []
         self._tps = []
 
@@ -152,7 +153,10 @@ class Simulation:
             # Make move; get particle, original and new coordinates
             move_idx, original_coords, new_coords = self.trial_move(max_trans)
             self.system[move_idx] = new_coords
-            overlap = check_overlap(self.system, move_idx, self.L, self.r)
+            if self.hard_sphere:
+                overlap = check_overlap(self.system, move_idx, self.L, self.r)
+            else:
+                overlap = False
             trial_energy = self.calculate_energy(self.system, overlap)
             if np.isfinite(trial_energy):
                 delta_U = trial_energy - initial_energy
@@ -171,6 +175,7 @@ class Simulation:
                 self.rejected_moves += 1
 
             if i % self.energy_write_freq == 0:
+                print(len(self.energies))
                 self.energies.append(self.energy)
                 self.temperatures.append(kT)
                 if len(self.energies) == 5000:
