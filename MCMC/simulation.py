@@ -175,7 +175,6 @@ class Simulation:
                 self.rejected_moves += 1
 
             if i % self.energy_write_freq == 0:
-                print(len(self.energies))
                 self.energies.append(self.energy)
                 self.temperatures.append(kT)
                 if len(self.energies) == 5000:
