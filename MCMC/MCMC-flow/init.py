@@ -25,7 +25,7 @@ def get_parameters():
     parameters["r"] = [0.5]
     parameters["r_cut"] = [2.5]
     parameters["energy_func"] = ["lj"]
-    parameters["hard_sphere"] = [False]
+    parameters["hard_sphere"] = [True]
 
     # LJ energy parameters
     parameters["epsilon"] = [1.0]
@@ -34,25 +34,13 @@ def get_parameters():
     parameters["m"] = [6]
 
     # logging parameters
-    parameters["energy_write_freq"] = [20000]
-    parameters["trajectory_write_freq"] = [100000]
+    parameters["energy_write_freq"] = [1000]
+    parameters["trajectory_write_freq"] = [10000]
 
     # run parameters
-    parameters["n_steps"] = [[1e7, 2e8]]
-    parameters["kT"] = [[10, 2.0]]
-    parameters["max_trans"] = [
-	[3.0, 0.3],
-	[3.0, 0.4],
-	[3.0, 0.5],
-	[3.0, 0.6],
-	[3.0, 0.7],
-	[3.0, 0.8],
-	[3.0, 0.9],
-	[3.0, 1.0],
-	[3.0, 1.1],
-	[3.0, 1.2],
-	[3.0, 1.3],
-]
+    parameters["n_steps"] = [[1e7, 1e8]]
+    parameters["kT"] = [[10, 1.5]]
+    parameters["max_trans"] = [[3.0, 0.5]]
 
     return list(parameters.keys()), list(product(*parameters.values()))
 
