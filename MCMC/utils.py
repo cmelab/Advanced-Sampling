@@ -3,6 +3,7 @@ import numpy as np
 import gsd.hoomd
 from numba import jit
 
+
 def avg_nn(gsd_file, frame=-1, r_max=3):
     with gsd.hoomd.open(gsd_file) as f:
         snap = f[frame]
@@ -17,15 +18,16 @@ def avg_nn(gsd_file, frame=-1, r_max=3):
             frame_avg_nn.append(np.average(neighbors))
     return np.average(frame_avg_nn)
 
+
 def structure_factor(gsd_file, start=0, stop=-1, num_k_values=100, k_max=10):
     with gsd.hoomd.open(gsd_file, "rb") as f:
         sf = freud.diffraction.StaticStructureFactorDebye(
                 num_k_values=num_k_values, k_max=k_max
-                )
+        )
         for snap in f[start:stop]:
             box = snap.configuration.box
             points = snap.particles.position
-        sf.compute((box, points))
+            sf.compute((box, points))
     return sf
 
 
@@ -35,12 +37,21 @@ def rdf(gsd_file, start=0, stop=-1, bins=50, r_max=2):
         for snap in f[start:stop]:
             box = snap.configuration.box
             points = snap.particles.position
-            if not r_max:
-                r_max = np.nextafter(
-                        np.max(snap.configuration.box[:3]) * 0.3, 0, dtype=np.float32
-                        )
-        rdf.compute((box,points))
+            rdf.compute((box,points))
     return rdf
+
+
+def decorrelation(energies):
+    """
+    Calculates decorrelation step size from energies.
+    :param energies: System energies
+    :return: decorrelation step size
+    """
+    ft = np.fft.rfft(energies - np.average(energies))
+    acorr = np.fft.irfft(ft * np.conjugate(ft)) / (len(energies) * np.var(energies))
+    acorr = acorr[0:int(len(acorr) // 2)]
+    decorr_i = np.where(acorr <= 0)[0][0]
+    return decorr_i
 
 
 def inverse_distance_attractive(distances):
@@ -74,6 +85,7 @@ def lj_energy(distances, epsilon=1.0, sigma=1.0, n=12, m=6):
     :return: Total energy.
     """
     return 4 * epsilon * (np.power(sigma / distances, n) - np.power(sigma / distances, m)).sum()
+
 
 @jit(nopython=True)
 def get_distance(pos1, pos2, L):
