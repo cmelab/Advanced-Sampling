@@ -19,6 +19,7 @@ class Simulation:
             r_cut=2.5,
             energy_write_freq=100,
             trajectory_write_freq=10000,
+            seed = 20
             energy_func=None,
             hard_sphere=True,
             restart=False,
@@ -30,6 +31,7 @@ class Simulation:
         :param write_freq: Save system history frequency.
         :param energy_func: Function to calculate energy.
         :param hard_sphere: Bool; Set whether overlapping particles have infinite energy
+        :param seed: int; Seed passed to integrator when randomizing velocities.
         :param kwargs: Pass in the kwargs for the energy function used.
         """
         self.n_density = n_density
@@ -50,6 +52,8 @@ class Simulation:
         self.energies = [np.copy(self.energy)]
         self.temperatures = []
         self._tps = []
+        
+        random.seed(seed=seed)
 
     @property
     def tps(self):
