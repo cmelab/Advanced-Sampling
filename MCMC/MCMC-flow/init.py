@@ -57,6 +57,12 @@ def main():
         parent_job = project.open_job(parent_statepoint)
         parent_job.init()
         parent_job.doc.setdefault("done", False)
+        parent_job.doc.setdefault("timestep", [])
+        parent_job.doc.setdefault("accepted_moves", [])
+        parent_job.doc.setdefault("rejected_moves", [])
+        parent_job.doc.setdefault("acceptance_ratio", [])
+        parent_job.doc.setdefault("tps", [])
+        parent_job.doc.setdefault("energy", [])
         # each pair of (`n_steps`, `kT`) defines a phase of simulation run. The `phase_{i}` key in job doc determines
         # whether that phase is already done or not. False means phase is not done.
         n_steps_size = len(parent_statepoint['n_steps'])
@@ -69,12 +75,6 @@ def main():
             raise ValueError(
                 "These lists must have the same length: `n_steps`, `kT` and `max_trans` for each job! \n "
                 "`n_step` size: {}, `kT` size: {}, `max_trans` size: {}".format(n_steps_size, kT_size, max_trans_size))
-        parent_job.doc["timestep"] = []
-        parent_job.doc["accepted_moves"] = []
-        parent_job.doc["rejected_moves"] = []
-        parent_job.doc["acceptance_ratio"] = []
-        parent_job.doc["tps"] = []
-        parent_job.doc["energy"] = []
     if custom_job_doc:
         for key in custom_job_doc:
             parent_job.doc.setdefault(key, custom_job_doc[key])
