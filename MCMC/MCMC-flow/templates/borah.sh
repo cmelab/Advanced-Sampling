@@ -5,7 +5,7 @@
 {% if partition %}
 #SBATCH --partition={{ partition }}
 {% endif %}
-#SBATCH -t {{ 96|format_timedelta }}
+#SBATCH -t {{ 48|format_timedelta }}
 {% if job_output %}
 #SBATCH --output={{ job_output }}
 #SBATCH --error={{ job_output }}
