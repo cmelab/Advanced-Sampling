@@ -20,7 +20,7 @@ class Simulation:
             r_cut=2.5,
             energy_write_freq=100,
             trajectory_write_freq=10000,
-            seed = 20
+            seed=20,
             energy_func=None,
             hard_sphere=True,
             restart=False,
