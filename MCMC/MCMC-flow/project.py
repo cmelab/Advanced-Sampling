@@ -100,7 +100,7 @@ def sample(job):
         sim = Simulation(n_particles=job.sp.n_particles, n_density=job.sp.n_density, r=job.sp.r, r_cut=job.sp.r_cut,
                          energy_write_freq=job.sp.energy_write_freq, trajectory_write_freq=job.sp.trajectory_write_freq,
                          energy_func=ENERGY_FUNCS[job.sp.energy_func], hard_sphere=job.sp.hard_sphere, restart=restart,
-                         sigma=job.sp.sigma, epsilon=job.sp.epsilon, n=job.sp.n, m=job.sp.m)
+                         sigma=job.sp.sigma, epsilon=job.sp.epsilon, n=job.sp.n, m=job.sp.m, seed=job.sp.seed)
         job.doc["L"] = sim.L
 
         print("----------------------")
