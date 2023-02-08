@@ -54,7 +54,7 @@ class Simulation:
         self.temperatures = []
         self._tps = []
         
-        random.seed(seed=seed)
+        random.seed(seed)
 
     @property
     def tps(self):
