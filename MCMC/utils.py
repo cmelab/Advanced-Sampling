@@ -1,5 +1,6 @@
 import freud
 import numpy as np
+import gsd.hoomd
 from numba import jit
 
 

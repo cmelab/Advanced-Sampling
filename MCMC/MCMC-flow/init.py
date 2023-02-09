@@ -41,6 +41,7 @@ def get_parameters():
     parameters["n_steps"] = [[1e7, 1e8]]
     parameters["kT"] = [[10, 1.5]]
     parameters["max_trans"] = [[3.0, 0.5]]
+    parameters["seed"] = [20]
 
     return list(parameters.keys()), list(product(*parameters.values()))
 
