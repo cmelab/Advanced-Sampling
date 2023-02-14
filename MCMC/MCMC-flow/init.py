@@ -39,7 +39,7 @@ def get_parameters():
     parameters["trajectory_write_freq"] = [10000]
 
     # run parameters
-    parameters["n_steps"] = [[5e7, 1e8]]
+    parameters["n_steps"] = [[2e7, 2e7]]
     # Put your temperatures here, remember each one is a list of 2 temperatures
     # First, the mixing temperature, which we'll keep at 10 for all jobs
     # Second, the state point temperature
