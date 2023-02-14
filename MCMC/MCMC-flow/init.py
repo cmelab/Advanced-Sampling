@@ -30,7 +30,7 @@ def get_parameters():
 
     # LJ energy parameters
     parameters["epsilon"] = [1.0]
-    parameters["sigma"] = [0.5]
+    parameters["sigma"] = [1.0]
     parameters["n"] = [12]
     parameters["m"] = [6]
 
