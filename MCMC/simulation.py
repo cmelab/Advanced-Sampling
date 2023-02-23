@@ -76,7 +76,7 @@ class Simulation:
         x and y coordinates are between -L/2 and L/2.
         :return: A 2D numpy array of shape (self.n_particles, 2).
         """
-        if restart and os.path.isfile("system.txt"):
+        if restart and os.path.isfile("restart.gsd"):
             system = self._load_system()
         else:
             disks_per_row = math.floor((self.L - self.r) / (2 * self.r))
@@ -211,13 +211,18 @@ class Simulation:
             plt.savefig(os.path.join(save_path, fig_name))
         return plt
 
-    def save_system(self, frame=-1):
+    def save_snapshot(self,fname="restart.gsd"):
         """
-        Save a single snapshot of system_history to a .txt file.
-        :param frame: Index number of system_history
+        Save a snapshot of system to a .gsd file.
+        :param fname: name of the file.
         """
-        system_array = self.system_history[frame]
-        np.savetxt(fname="system.txt", X=system_array)
+        with gsd.hoomd.open(fname, 'wb') as traj:
+            snap = gsd.hoomd.Snapshot()
+            snap.particles.N = self.n_particles
+            snap.configuration.box = [self.L, self.L, self.L, 0, 0, 0]
+            snap.particles.type = ['A']
+            snap.particles.position = np.append(self.system, np.zeros((self.system.shape[0], 1)), axis=1)
+            traj.append(snap)
 
     def save_trajectory(self, fname="traj.gsd"):
         with gsd.hoomd.open(fname, 'wb') as traj:
@@ -248,10 +253,18 @@ class Simulation:
                         file.write(f"{e},{t}" + "\n")
 
     def _load_system(self):
-        system = np.loadtxt(fname="system.txt")
+        snapshot = gsd.hoomd.open("restart.gsd")[0]
         try:
-            assert system.shape[0] == self.n_particles
+            assert snapshot.particles.N == self.n_particles
         except AssertionError:
             raise AssertionError(
                 "Number of particles in the saved system is not equal to the specified number of particles!")
-        return system
+
+        try:
+            assert snapshot.configuration.box[0] == self.L
+        except AssertionError:
+            raise AssertionError(
+                "Box size in the saved system is not equal to the box size!")
+
+        sys = snapshot.particles.position[:, :2]
+        return sys
