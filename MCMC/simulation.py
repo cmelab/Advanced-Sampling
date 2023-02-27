@@ -261,10 +261,9 @@ class Simulation:
                 "Number of particles in the saved system is not equal to the specified number of particles!")
 
         try:
-            assert snapshot.configuration.box[0] == self.L
+            assert np.isclose(snapshot.configuration.box[0], self.L)
         except AssertionError:
             raise AssertionError(
                 "Box size in the saved system is not equal to the box size!")
-
         sys = snapshot.particles.position[:, :2]
         return sys
