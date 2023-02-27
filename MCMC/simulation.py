@@ -53,7 +53,7 @@ class Simulation:
         self.energies = [copy.deepcopy(self.energy)]
         self.temperatures = []
         self._tps = []
-        
+
         random.seed(seed)
 
     @property
@@ -211,7 +211,7 @@ class Simulation:
             plt.savefig(os.path.join(save_path, fig_name))
         return plt
 
-    def save_snapshot(self,fname="restart.gsd"):
+    def save_snapshot(self, fname="restart.gsd"):
         """
         Save a snapshot of system to a .gsd file.
         :param fname: name of the file.
