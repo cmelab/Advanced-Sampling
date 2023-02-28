@@ -22,7 +22,7 @@ class Simulation:
             trajectory_write_freq=10000,
             seed=20,
             energy_func=None,
-            hard_sphere=True,
+            hard_sphere=False,
             restart=False,
             **kwargs):
         """
