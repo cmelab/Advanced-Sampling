@@ -25,7 +25,7 @@ def get_parameters():
     parameters["r"] = [0.5]
     parameters["r_cut"] = [2.5]
     parameters["energy_func"] = ["lj"]
-    parameters["hard_sphere"] = [True]
+    parameters["hard_sphere"] = [False]
 
     # LJ energy parameters
     parameters["epsilon"] = [1.0]
@@ -35,12 +35,16 @@ def get_parameters():
 
     # logging parameters
     parameters["energy_write_freq"] = [1000]
-    parameters["trajectory_write_freq"] = [10000]
+    parameters["trajectory_write_freq"] = [1000]
 
     # run parameters
-    parameters["n_steps"] = [[1e7, 1e8]]
-    parameters["kT"] = [[10, 1.5]]
-    parameters["max_trans"] = [[3.0, 0.5]]
+    parameters["mixing_steps"] = [10e5]
+    parameters["mixing_kT"] = [10]
+    parameters["mixing_max_trans"] = [0.5]
+
+    parameters["n_steps"] = [[10e5]]
+    parameters["kT"] = [[1.5]]
+    parameters["max_trans"] = [[0.5]]
     parameters["seed"] = [20]
 
     return list(parameters.keys()), list(product(*parameters.values()))
@@ -58,24 +62,14 @@ def main():
         parent_job = project.open_job(parent_statepoint)
         parent_job.init()
         parent_job.doc.setdefault("done", False)
+        parent_job.doc.setdefault("current_run", 0)
+        parent_job.doc.setdefault("mixed", False)
         parent_job.doc.setdefault("timestep", [])
         parent_job.doc.setdefault("accepted_moves", [])
         parent_job.doc.setdefault("rejected_moves", [])
         parent_job.doc.setdefault("acceptance_ratio", [])
         parent_job.doc.setdefault("tps", [])
         parent_job.doc.setdefault("energy", [])
-        # each pair of (`n_steps`, `kT`) defines a phase of simulation run. The `phase_{i}` key in job doc determines
-        # whether that phase is already done or not. False means phase is not done.
-        n_steps_size = len(parent_statepoint['n_steps'])
-        kT_size = len(parent_statepoint['kT'])
-        max_trans_size = len(parent_statepoint['max_trans'])
-        if n_steps_size == kT_size == max_trans_size:
-            for i in range(1, n_steps_size + 1):
-                parent_job.doc.setdefault("phase_{}".format(i), False)
-        else:
-            raise ValueError(
-                "These lists must have the same length: `n_steps`, `kT` and `max_trans` for each job! \n "
-                "`n_step` size: {}, `kT` size: {}, `max_trans` size: {}".format(n_steps_size, kT_size, max_trans_size))
     if custom_job_doc:
         for key in custom_job_doc:
             parent_job.doc.setdefault(key, custom_job_doc[key])
