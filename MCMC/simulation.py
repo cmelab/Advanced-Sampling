@@ -8,7 +8,7 @@ import gsd.hoomd
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import pair_distances, check_overlap
+from MCMC.utils import pair_distances, check_overlap
 
 
 class Simulation:
