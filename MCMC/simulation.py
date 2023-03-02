@@ -8,7 +8,7 @@ import gsd.hoomd
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import pair_distances, check_overlap
+from MCMC.utils import pair_distances, check_overlap
 
 
 class Simulation:
@@ -22,7 +22,7 @@ class Simulation:
             trajectory_write_freq=10000,
             seed=20,
             energy_func=None,
-            hard_sphere=True,
+            hard_sphere=False,
             restart=False,
             **kwargs):
         """
@@ -262,10 +262,9 @@ class Simulation:
                 "Number of particles in the saved system is not equal to the specified number of particles!")
 
         try:
-            assert snapshot.configuration.box[0] == self.L
+            assert np.isclose(snapshot.configuration.box[0], self.L)
         except AssertionError:
             raise AssertionError(
                 "Box size in the saved system is not equal to the box size!")
-
         sys = snapshot.particles.position[:, :2]
         return sys

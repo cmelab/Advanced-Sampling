@@ -25,7 +25,7 @@ def get_parameters():
     parameters["r"] = [0.5]
     parameters["r_cut"] = [2.5]
     parameters["energy_func"] = ["lj"]
-    parameters["hard_sphere"] = [True]
+    parameters["hard_sphere"] = [False]
 
     # LJ energy parameters
     parameters["epsilon"] = [1.0]
@@ -35,14 +35,14 @@ def get_parameters():
 
     # logging parameters
     parameters["energy_write_freq"] = [1000]
-    parameters["trajectory_write_freq"] = [10000]
+    parameters["trajectory_write_freq"] = [1000]
 
     # run parameters
-    parameters["mixing_steps"] = [2000]
+    parameters["mixing_steps"] = [10e5]
     parameters["mixing_kT"] = [10]
     parameters["mixing_max_trans"] = [0.5]
 
-    parameters["n_steps"] = [[2000]]
+    parameters["n_steps"] = [[10e5]]
     parameters["kT"] = [[1.5]]
     parameters["max_trans"] = [[0.5]]
     parameters["seed"] = [20]
