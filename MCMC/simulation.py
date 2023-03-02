@@ -238,6 +238,7 @@ class Simulation:
         """Clear the system history and reset the system."""
         self.system_history.clear()
         self.energies.clear()
+        self.energies.clear()
         self.timestep = 0
         self.accepted_moves = 0
         self.rejected_moves = 0
