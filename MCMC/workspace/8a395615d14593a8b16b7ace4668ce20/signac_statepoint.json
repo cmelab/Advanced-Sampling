@@ -1,0 +1,1 @@
+{"n_density": 0.5, "n_particles": 100, "r": 0.5, "r_cut": 2.5, "energy_func": "lj", "hard_sphere": true, "epsilon": 1.0, "sigma": 0.5, "n": 12, "m": 6, "energy_write_freq": 20000, "trajectory_write_freq": 100000, "n_steps": [10000000.0, 200000000.0], "kT": [10, 1.0], "max_trans": [3.0, 0.6]}
