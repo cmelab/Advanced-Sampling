@@ -20,16 +20,17 @@ def get_parameters():
     parameters = OrderedDict()
 
     # system parameters
+    # Put your density state points here:
     parameters["n_density"] = [0.5]
     parameters["n_particles"] = [100]
     parameters["r"] = [0.5]
     parameters["r_cut"] = [2.5]
     parameters["energy_func"] = ["lj"]
-    parameters["hard_sphere"] = [True]
+    parameters["hard_sphere"] = [False]
 
     # LJ energy parameters
     parameters["epsilon"] = [1.0]
-    parameters["sigma"] = [0.5]
+    parameters["sigma"] = [1.0]
     parameters["n"] = [12]
     parameters["m"] = [6]
 
@@ -38,9 +39,14 @@ def get_parameters():
     parameters["trajectory_write_freq"] = [10000]
 
     # run parameters
-    parameters["n_steps"] = [[1e7, 1e8]]
-    parameters["kT"] = [[10, 1.5]]
-    parameters["max_trans"] = [[3.0, 0.5]]
+    parameters["n_steps"] = [[2e7, 2e7]]
+    # Put your temperatures here, remember each one is a list of 2 temperatures
+    # First, the mixing temperature, which we'll keep at 10 for all jobs
+    # Second, the state point temperature
+    parameters["kT"] = [
+            [10, 1.5]
+    ]
+    parameters["max_trans"] = [[0.5, 0.5]]
     parameters["seed"] = [20]
 
     return list(parameters.keys()), list(product(*parameters.values()))
@@ -50,7 +56,7 @@ custom_job_doc = {}  # add keys and values for each job document created
 
 
 def main():
-    project = signac.init_project("MCMC-project")  # Set the signac project name
+    project = signac.init_project("MC-den-temp-sweep")  # Set the signac project name
     param_names, param_combinations = get_parameters()
     # Create jobs
     for params in param_combinations:
