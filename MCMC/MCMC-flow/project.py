@@ -85,6 +85,7 @@ def initialized(job):
 @directives(executable="python -u")
 @MyProject.operation
 @MyProject.post(sampled)
+@MyProject.post(analysis)
 def sample(job):
     with job:
         print("-----------------------")
@@ -131,6 +132,18 @@ def sample(job):
         print("Simulation finished completed")
         print("-----------------------------")
 
+def analysis(job):
+    os.makedirs(os.path.join(job.ws, "rdf/"))
+    gsdfile = job.fn('trajectory.gsd')
+    rdf = all_atom_rdf(gsdfile, r_max=1.4, start=-30)
+    x = rdf.bin_centers
+    y = rdf.rdf
+    peakx = max(x)
+    peaky = max(y)
+    save_path = os.path.join(job.ws, "rdf/rdf.txt")
+    np.savetxt(save_path, np.transpose([x,y]), delimeter=',', header ="bin_centers, rdf")
+    save_peak = os.path.join(job.ws, "rdf/peak.txt")
+    np.savetxt(save_peak, np.transpose([peakx, peaky]), delimeter=',', header="max_x, max_y")
 
 if __name__ == "__main__":
     MyProject().main()

@@ -34,13 +34,13 @@ def get_parameters():
     parameters["m"] = [6]
 
     # logging parameters
-    parameters["energy_write_freq"] = [1000]
+    parameters["energy_write_freq"] = [20000]
     parameters["trajectory_write_freq"] = [10000]
 
     # run parameters
-    parameters["n_steps"] = [[1e7, 1e8]]
-    parameters["kT"] = [[10, 1.5]]
-    parameters["max_trans"] = [[3.0, 0.5]]
+    parameters["n_steps"] = [[1e7, 2e8]]
+    parameters["kT"] = [[10, 1.0]]
+    parameters["max_trans"] = [[3.0, 0.3]]
     parameters["seed"] = [20]
 
     return list(parameters.keys()), list(product(*parameters.values()))
