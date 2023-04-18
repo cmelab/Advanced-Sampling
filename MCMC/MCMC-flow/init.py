@@ -59,6 +59,7 @@ def main():
         parent_job.init()
         parent_job.doc.setdefault("done", False)
         parent_job.doc.setdefault("timestep", [])
+        parent_job.doc.setdefault("analyzed", False)
         parent_job.doc.setdefault("accepted_moves", [])
         parent_job.doc.setdefault("rejected_moves", [])
         parent_job.doc.setdefault("acceptance_ratio", [])

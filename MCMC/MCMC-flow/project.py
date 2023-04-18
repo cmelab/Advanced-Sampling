@@ -81,11 +81,13 @@ def sampled(job):
 def initialized(job):
     return job.isfile("trajectory.gsd")
 
+@MyProject.label
+def analyzed(job):
+    return job.doc.get("analyzed")
 
 @directives(executable="python -u")
 @MyProject.operation
 @MyProject.post(sampled)
-@MyProject.post(analysis)
 def sample(job):
     with job:
         print("-----------------------")
@@ -132,10 +134,15 @@ def sample(job):
         print("Simulation finished completed")
         print("-----------------------------")
 
+@MyProject.operation
+@MyProject.pre(sampled)
+@MyProject.post(analyzed)
 def analysis(job):
-    os.makedirs(os.path.join(job.ws, "rdf/"))
-    gsdfile = job.fn('trajectory.gsd')
+    from cmeutils.structure import all_atom_rdf
+    import numpy as np
+    os.makedirs(os.path.join(job.ws, "analysis/"))
     logfile= job.fn('log.txt')
+    gsdfile = job.fn('trajectory_1.gsd')
     rdf = all_atom_rdf(gsdfile, r_max=1.4, start=-30)
     x = rdf.bin_centers
     y = rdf.rdf
@@ -144,10 +151,11 @@ def analysis(job):
     pe = np.genfromtxt(logfile)
     mean = np.nanmean(pe)
     job.doc['average_PE'] = mean
-    save_path = os.path.join(job.ws, "rdf/rdf.txt")
-    np.savetxt(save_path, np.transpose([x,y]), delimeter=',', header ="bin_centers, rdf")
-    save_peak = os.path.join(job.ws, "rdf/peak.txt")
-    np.savetxt(save_peak, np.transpose([peakx, peaky]), delimeter=',', header="max_x, max_y")
+    save_path = os.path.join(job.ws, "analysis/rdf/rdf.txt")
+    np.savetxt(save_path, np.transpose([x,y]), delimiter=',', header ="bin_centers, rdf")
+    save_peak = os.path.join(job.ws, "analysis/rdf/peak.txt")
+    np.savetxt(save_peak, np.transpose([peakx, peaky]), delimiter=',', header="max_x, max_y")
+    job.doc["analyzed"] = True
 
 if __name__ == "__main__":
     MyProject().main()
