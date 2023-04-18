@@ -135,11 +135,15 @@ def sample(job):
 def analysis(job):
     os.makedirs(os.path.join(job.ws, "rdf/"))
     gsdfile = job.fn('trajectory.gsd')
+    logfile= job.fn('log.txt')
     rdf = all_atom_rdf(gsdfile, r_max=1.4, start=-30)
     x = rdf.bin_centers
     y = rdf.rdf
     peakx = max(x)
     peaky = max(y)
+    pe = np.genfromtxt(logfile)
+    mean = np.nanmean(pe)
+    job.doc['average_PE'] = mean
     save_path = os.path.join(job.ws, "rdf/rdf.txt")
     np.savetxt(save_path, np.transpose([x,y]), delimeter=',', header ="bin_centers, rdf")
     save_peak = os.path.join(job.ws, "rdf/peak.txt")
