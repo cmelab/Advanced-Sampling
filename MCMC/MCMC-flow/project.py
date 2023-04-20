@@ -140,7 +140,7 @@ def sample(job):
 def analysis(job):
     from cmeutils.structure import all_atom_rdf
     import numpy as np
-    os.makedirs(os.path.join(job.ws, "analysis/rdf/"))
+    os.makedirs(os.path.join(job.ws, "analysis/"))
     gsdfile = job.fn('trajectory_1.gsd')
     rdf = all_atom_rdf(gsdfile, r_max=1.4, start=-30)
     x = rdf.bin_centers
