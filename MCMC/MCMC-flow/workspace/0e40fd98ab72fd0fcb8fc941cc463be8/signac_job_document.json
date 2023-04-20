@@ -1,1 +1,0 @@
-{"done": true, "timestep": [20000000, 20000000], "accepted_moves": [17105061, 15780476], "rejected_moves": [2894939, 4219524], "acceptance_ratio": [0.85525305, 0.7890238], "tps": [3605.123, 3593.42], "energy": [8.051543228433534, -49.2861503256632], "phase_1": true, "phase_2": true, "L": 20.0}
