@@ -138,11 +138,11 @@ def sample(job):
 @MyProject.pre(sampled)
 @MyProject.post(analyzed)
 def analysis(job):
-    from cmeutils.structure import all_atom_rdf
+    from utils import avg_nn, rdf
     import numpy as np
-    os.makedirs(os.path.join(job.ws, "analysis/"))
+    os.makedirs(os.path.join(job.ws, "analysis/rdf"))
     gsdfile = job.fn('trajectory_1.gsd')
-    rdf = all_atom_rdf(gsdfile, r_max=1.4, start=-30)
+    rdf = rdf(gsdfile, start=-30)
     x = rdf.bin_centers
     y = rdf.rdf
     peakx = max(x)
@@ -155,6 +155,8 @@ def analysis(job):
     save_peak = os.path.join(job.ws, "analysis/rdf/peak.txt")
     np.savetxt(save_peak, np.transpose([peakx, peaky]), delimiter=',', header="max_x, max_y")
     job.doc['average_PE'] = mean
+    nn = avg_nn(gsdfile, frame=-1, r_max=2)
+    job.doc['average_nn'] = nn
     job.doc["analyzed"] = True
     
 
