@@ -155,7 +155,7 @@ def analysis(job):
     save_peak = os.path.join(job.ws, "analysis/rdf/peak.txt")
     np.savetxt(save_peak, np.transpose([peakx, peaky]), delimiter=',', header="max_x, max_y")
     job.doc['average_PE'] = mean
-    nn = avg_nn(gsdfile, frame=-1, r_max=2)
+    nn = avg_nn(gsdfile, frame=-1)
     job.doc['average_nn'] = nn
     job.doc["analyzed"] = True
     
