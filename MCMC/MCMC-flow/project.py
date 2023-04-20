@@ -140,15 +140,16 @@ def sample(job):
 def analysis(job):
     from cmeutils.structure import all_atom_rdf
     import numpy as np
-    os.makedirs(os.path.join(job.ws, "analysis/"))
+    os.makedirs(os.path.join(job.ws, "analysis/rdf/"))
     gsdfile = job.fn('trajectory_1.gsd')
     rdf = all_atom_rdf(gsdfile, r_max=1.4, start=-30)
     x = rdf.bin_centers
     y = rdf.rdf
     peakx = max(x)
     peaky = max(y)
-    energy = np.genfromtxt(job.fn('log.txt'))
-    mean = np.nanmean(energy)
+    logfile = job.fn('log.txt')
+    energy = np.genfromtxt(logfile, delimiter=",")
+    mean = np.mean(energy[:,0])
     save_path = os.path.join(job.ws, "analysis/rdf/rdf.txt")
     np.savetxt(save_path, np.transpose([x,y]), delimiter=',', header ="bin_centers, rdf")
     save_peak = os.path.join(job.ws, "analysis/rdf/peak.txt")
