@@ -150,11 +150,13 @@ def analysis(job):
     logfile = job.fn('log.txt')
     energy = np.genfromtxt(logfile, delimiter=",")
     mean = np.mean(energy[:,0])
+    sd = np.std(energy[:,0])
     save_path = os.path.join(job.ws, "analysis/rdf/rdf.txt")
     np.savetxt(save_path, np.transpose([x,y]), delimiter=',', header ="bin_centers, rdf")
     save_peak = os.path.join(job.ws, "analysis/rdf/peak.txt")
     np.savetxt(save_peak, np.transpose([peakx, peaky]), delimiter=',', header="max_x, max_y")
-    job.doc['average_PE'] = mean
+    job.doc['avg_PE'] = mean
+    job.doc['sd_PE'] = sd
     nn = avg_nn(gsdfile, frame=-1)
     job.doc['average_nn'] = nn
     job.doc["analyzed"] = True
